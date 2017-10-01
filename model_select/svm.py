@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from matplotlib import style
 import datetime
 import pickle
+from scipy.stats import randint as sp_randint
+import random
 
 clf = LinearSVR()
 
@@ -35,9 +37,9 @@ X = df_train.drop(['parcelid', 'logerror', 'transactiondate', 'propertyzoningdes
 X = preprocessing.normalize(X)
 Y = df_train['logerror'].values
 
-weird = (X.applymap(type) != X.iloc[0].apply(type)).any(axis=1)
-new_df = X[weird]
-new_df.to_csv('weird.csv')
+# weird = (X.applymap(type) != X.iloc[0].apply(type)).any(axis=1)
+# new_df = X[weird]
+# new_df.to_csv('weird.csv')
 print('done writing weird to csv')
 
 
@@ -47,10 +49,22 @@ print('done writing weird to csv')
 print('About to divide into cross validation')
 X_train, X_test, Y_train, Y_test = cross_validation.train_test_split(X, Y, test_size=0.2)
 
-clf = LinearSVR()
-clf.fit(X_train, Y_train)
-confidence = clf.score(X_test, Y_test)
-print(confidence)
-filename = 'zillow_linear_svr.pickle'
-with open(filename,'wb') as f:
-    pickle.dump(clf, f)
+# clf = LinearSVR()
+# clf.fit(X_train, Y_train)
+# confidence = clf.score(X_test, Y_test)
+# print(confidence)
+# filename = 'zillow_linear_svr.pickle'
+# with open(filename,'wb') as f:
+#     pickle.dump(clf, f)
+
+
+
+for k in ['rbf']:
+
+    clf = svm.SVR(kernel = k, C = 0.01, epsilon = 0.01, max_iter = 500000, cache_size = 500)
+    clf.fit(X_train, Y_train)
+    confidence = clf.score(X_test, Y_test)
+    print(confidence)
+    filename = 'zillow_svm_rbf.pickle'
+    with open(filename,'wb') as f:
+        pickle.dump(clf, f)
