@@ -1,73 +1,104 @@
+from sklearn.cross_validation import train_test_split, KFold
+from models import LinearRegression
+#import plotting packages
+import plotly.offline as py
+py.init_notebook_mode(connected=True)
+import plotly.graph_objs as go
 
+class Ensembler(object):
 
-class EnsembleBase(object):
+    """An instance of this class is an ensemble model.  It has several base models, and an independent model
+    which acts on the predictions of the base models.
+    """
 
-    def __init__(self, classifiers, x_feats, y_feats):
+    def __init__(self, base_models, second_layer_model):
 
-        """ classifiers is a list of lists. The zeroeth list
-            is the list of first classifiers. The next list builds
-            a prediction based on the predictions of the previous
-            classifiers on the list.
-            x_feats: features that will be trained on
-            y_feats: features that will be used predictions
+        """ base_models is a list of the ML algorithms whose results are ensembled upon.
+            second_layer_model is the model we train on the predictions of the base_models.
         """
 
-        self.classifiers = classifiers
+        self.base_models = base_models
+        self.second_layer_model = second_layer_model
 
 
-    def train(self):
+    def train(self, x, y):
 
-        """ Trains the classifiers
+        """ Trains the ensemble. Uses cross validation during training to prevent data leakage
+            into second layer.
+        """
+        #Split into test and validation set - we want to send validation results to next layer
+        x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=13750)
+        first_layer_train_predictions = np.empty((x_train.shape[0], 5))
+
+        #train first layer
+        for i in range(len(base_models)):
+            print("training baseline model")
+            base_models[i].train(x_train, y_train)
+            first_layer_train_predictions[:, i] = base_models[i].predict(x_val)
+
+        #train second layer
+        self.second_layer_model.train(first_layer_train_predictions, y_val)
+
+        #we need this value to generate heatmaps
+        return first_layer_train_predictions
+
+
+    def predict(self, x):
+        first_layer_test_predictions = np.empty((x_test.shape[0], 5))
+        #predict on first layer
+        for i in range(len(base_models)):
+            print("predicting on first layer")
+            first_layer_test_predictions[:, i] = base_models[i].predict(x)
+        #make final predictions on second layer
+        second_layer_predictions = self.second_layer_model.predict(first_layer_test_predictions)
+        return second_layer_predictions
+
+
+    def heatmap(self, first_layer_train_predictions):
+        print("building dataframe for correlation visual")
+
+        base_predictions_train = pd.DataFrame({'RandomForest': first_layer_train_predictions[0].ravel(),
+                                               'ExtraTrees': first_layer_train_predictions[1].ravel(),
+                                               'AdaBoost': first_layer_train_predictions[2].ravel(),
+                                               'GradientBoost': first_layer_train_predictions[3].ravel(),
+                                               'XGBoost': first_layer_train_predictions[4].ravel()
+                                               })
+
+        data = [
+            go.Heatmap(
+                z=base_predictions_train.astype(float).corr().values,
+                x=base_predictions_train.columns.values,
+                y=base_predictions_train.columns.values,
+                colorscale='Portland',
+                showscale=True,
+                reversescale=True
+            )
+        ]
+
+        print("building plot")
+        py.plot(data, filename='labelled-heatmap')
+
+
+    def generateKaggleSubmission(self, sample, prop, train_columns):
+
+        """This method predicts on the test set and generates a file that can be submitted to Kaggle.
         """
 
-        clf_predictions = pd.DataFrame()
+        print('Building test set ...')
 
-        for clf in classifiers[0]:
-            bundle = clf.fit()
-            col = clf.predict(bundle['X_train'])
-            col = col.append(clf.predict(bundle['X_test']))
-            clf_predictions[clf.name] = col
+        sample['parcelid'] = sample['ParcelId']
+        df_test = sample.merge(prop, on='parcelid', how='left')
 
-        for stack in classifiers[1:]:
-            for clf in stack:
-                clf_predictions
+        x_test = df_test[train_columns]
 
+        for c in x_test.dtypes[x_test.dtypes == object].index.values:
+            x_test[c] = (x_test[c] == True)
 
-    def get_oof(clf, x_train, y_train, x_test):
+        test_predictions = self.predict(x_test)
 
-        """ This code was taken from Anisotrophic where he
-            described and implemented this cross-validation technique
-        """
+        sub = pd.read_csv('submission.csv')
+        for c in sub.columns[sub.columns != 'ParcelId']:
+            sub[c] = test_predictions
 
-        ntrain = train.shape[0]
-        ntest = test.shape[0]
-
-        NFOLDS = 5 # set folds for out-of-fold prediction
-        kf = KFold(ntrain, n_folds= NFOLDS, random_state=SEED)
-
-        oof_train = np.zeros((ntrain,))
-        oof_test = np.zeros((ntest,))
-        oof_test_skf = np.empty((NFOLDS, ntest))
-
-        for i, (train_index, test_index) in enumerate(kf):
-            x_tr = x_train[train_index]
-            y_tr = y_train[train_index]
-            x_te = x_train[test_index]
-
-            clf.train(x_tr, y_tr)
-
-            oof_train[test_index] = clf.predict(x_te)
-            oof_test_skf[i, :] = clf.predict(x_test)
-
-        oof_test[:] = oof_test_skf.mean(axis=0)
-        return oof_train.reshape(-1, 1), oof_test.reshape(-1, 1)
-
-
-    def fit(self):
-        asdf
-
-    def correlation(self):
-        asfd
-
-
-
+        print('Writing csv ...')
+        sub.to_csv('submission_file.csv', index=False, float_format='%.4f')

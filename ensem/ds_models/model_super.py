@@ -8,74 +8,29 @@ from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, accuracy_s
 from features import *
 
 
-class SKLearnBase(object):
+class Learner(object):
 
-    def __init__(self):
+    def __init__(self, algorithm, params):
 
         """ This MUST be overwritten
         """
-        raise NotImplementedErrror('subclass must provide their own init')
+        self.algorithm = algorithm
+        self.params = params
 
 
-
-    def pull_and_create_df(self):
-
-        """ This will pull the data and create a df from it.
-        """
-
-        all_feats = self.x_feats, self.y_feats
-        raw_df =  dsu.create_df(all_feats)
-
-        return {'raw_df': raw_df,
-                'raw_X_df': raw_df[train_features],
-                'raw_y_df': raw_df[test_features]
-                }
-
-
-    def test_train_split(self, raw_X, raw_y, test_size=0.8):
-
-        """ This will split the data into a test and train split.
-        """
-        
-        X_train, X_test, y_train, y_test = train_test_split(
-            raw_X, 
-            raw_y, 
-            test_size=test_size, 
-            random_state=seed)
-        
-        return {'X_train': X_train,
-                'y_train': y_train,
-                'X_test': X_test,
-                'y_test': y_test,
-                'raw_X': raw_X,
-                'raw_y': raw_y
-                }
-
-    def train(self, X_train, y_train):
+    def train(self, x_train, y_train):
 
         """ Just a wrapper for training the data
         """
-        self.clf.fit(x_train, y_train)
+        self.algorithm.fit(x_train, y_train)
 
 
-    def fit(self, bundle=None):
+    def predict(self, x_test):
 
-        """ This is training and also returning a whole bundle to work with.
+        """ A wrapper for the prediction method
         """
 
-        if bundle is None:
-            
-            raw_bundle = self.pull_and_create_df()
-            bundle = self.test_train_split(raw_bundle['X_raw'], raw_bundle['y_raw'])
-        
-        self.train(X_train, y_train)
-        
-        return {'model': self, 
-                'X_train': X_train,
-                'y_train': y_train,
-                'X_test': bundle['y_test'],
-                'y_test': bundle['X_test']
-                 }
+        return self.algorithm.predict(x_test)
 
 
     def fit_with_analytics(bundle=None):
@@ -106,18 +61,8 @@ class SKLearnBase(object):
                 }
 
 
-
-    def predict(self, X_test):
-
-        """ A wrapper for the prediction method 
-        """
-
-        return self.clf.predict(X_test)
-
-
     def feature_importances(self, x, y):
 
         """ A wrapper for the feature importances
         """
         return self.clf.feature_importances_
-

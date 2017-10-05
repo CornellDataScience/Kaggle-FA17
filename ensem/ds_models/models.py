@@ -1,71 +1,57 @@
-from base_model import SKLearnBase
+from model_super import Learner
 
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, AdaBoostRegressor, BaggingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
-#import xgboost as xgb
+import xgboost as xgb
 
 
-def XGBoostBase(SKLearnBase):
+class XGBoost(Learner):
+
+    def __init__(self, params):
+        #set algorithm to be xgboost
+        super(xgb, params)
+
+    def train(self, x_train, y_train):
+        d_train = xgb.DMatrix(x_train, label=y_train)
+        xgb_model = self.algorithm.train(xgb_params, d_train, early_stopping_rounds=100, verbose_eval=10)
+        self.algorithm = xgb_model
+
+    def predict(self, x_test):
+        d_test = xgb.DMatrix(x_test)
+        return self.algorithm.predict(d_test)
 
 
-    def __init__(**params):
-        clf = xgboost
+class ExtraTrees(Learner):
+
+    def __init__(self, params):
+        #set algorithm to be extratrees
+        super(ExtraTreesRegressor, params)
 
 
+class RandomForest(Learner):
 
-def XGBoost_9_30_2017(SKLearnBase):
-
-    # XG Boost params
-    params = {
-        'eta': 0.037,
-        'max_depth': 5,
-        'subsample': 0.60,
-        'objective': 'reg:linear',
-        'eval_metric': 'mae',
-        'lambda': 0.8,
-        'alpha': 0.4,
-        'silent': 1
-    }
-
-    x_feats = []
-    y_feats = []
+    def __init__(self, params):
+        #set algorithm to be randomforest
+        super(RandomForestRegressor, params)
 
 
-def ExtraTrees_9_30_2017(SKLearnBase):
+class AdaBoost(Learner):
 
-    # Extra Trees params
-    params = {
-        'n_jobs': -1,
-        'n_estimators':500,
-        'max_depth': 8,
-        'min_samples_leaf': 2,
-        'verbose': 0
-    }
-
-    x_feats = []
-    y_feats = []
+    def __init__(self, params):
+        #set algorithm to be adaboost
+        super(AdaBoostRegressor, params)
 
 
-def RandomForest_9_30_2017(SKLearnBase):
+class DecisionTree(Learner):
 
-    # rf params
-    params = {'n_estimators': 50,
-                 'max_depth': 8,
-                 'min_samples_split': 100,
-                 'min_samples_leaf': 30,
-                 }
+    def __init__(self, params):
+        #set algorithm to decisiontree
+        super(DecisionTreeRegressor, params)
 
-    x_feats = []
-    y_feats = []
 
-def AdaBoost_9_30_2017(SKLearnBase):
+class LinearRegression(Learner):
 
-    # AdaBoost parameters
-    params = {
-        'n_estimators': 400,
-        'learning_rate' : 0.75
-    }
-
-    x_feats = []
-    y_feats = []
+    def __init__(self, params):
+        #set algorithm to linear regression
+        super(LinearRegression, params)
