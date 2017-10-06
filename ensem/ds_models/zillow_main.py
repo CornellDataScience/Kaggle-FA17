@@ -4,6 +4,7 @@ import xgboost as xgb
 
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import mean_absolute_error
+from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, AdaBoostRegressor, BaggingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -12,8 +13,12 @@ from model_super import *
 from models import *
 from ensembler import *
 
-#normalize and standardize data?  some categories have extremely high relative values
-#Best validation score:  0.0535038790343
+#note:  mean normalization has helped increase validation accuracy
+#note:  mean normalization has even maybe helped decorrelate models?
+#note:  dropping more "useless" columns has decreased validation training time significantly
+#Best validation score:  0.053413687092 (dropped bad columns)
+#Other scores: 0.0534753444281 (added mean normalization)
+#Other scores:  0.0539496646946
 
 ################################################ Load Data #############################################################
 
@@ -46,9 +51,30 @@ df_train = df_train[df_train.logerror < 0.4]
 
 #Drop bad columns
 x_train = df_train.drop(['parcelid', 'logerror', 'transactiondate', 'propertyzoningdesc',
-                         'propertycountylandusecode'], axis=1)
+                         'propertycountylandusecode', 'buildingclasstypeid', 'decktypeid',
+                         'hashottuborspa', 'poolcnt', 'pooltypeid10', 'pooltypeid2', 'pooltypeid7', 'storytypeid',
+                         'fireplaceflag', 'assessmentyear', 'taxdelinquencyflag'], axis=1)
 y_train = df_train['logerror'].values
 print(x_train.shape, y_train.shape)
+
+categorical_cols = ['transaction_month', 'transaction_day', 'transaction_quarter', 'airconditioningtypeid',
+                    'buildingqualitytypeid', 'fips', 'heatingorsystemtypeid', 'propertylandusetypeid', 'regionidcity',
+                    'regionidcounty', 'regionidneighborhood','regionidzip', 'yearbuilt']
+
+print("data types: ")
+print(x_train.dtypes)
+
+#perform mean normalization
+num_changed = 0
+for column in x_train:
+    if column not in categorical_cols:
+        mean = x_train[column].mean()
+        stdev = x_train[column].std()
+        if stdev != 0:
+            x_train[column] = (x_train[column] - mean) / stdev
+            num_changed += 1
+print("number changed: ")
+print(num_changed)
 
 train_columns = x_train.columns
 
@@ -130,8 +156,8 @@ ensemble_model.heatmap(first_layer_results)
 
 ############################################# Evaluate on validation set ###############################################
 
-ensemble_model.validation_accuracy(x_val, y_val)
+#ensemble_model.validation_accuracy(x_val, y_val)
 
 ########################################  Predict on Kaggle data and generate submission file ##########################
 
-#ensemble_model.generateKaggleSubmission(sample, prop, train_columns)
+ensemble_model.generateKaggleSubmission(sample, prop, train_columns)

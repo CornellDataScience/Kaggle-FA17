@@ -46,13 +46,10 @@ class Ensembler(object):
         #we need this value to generate heatmaps
         return first_layer_train_predictions
 
+
     def validation_accuracy(self, x_val, y_val):
         # predict on ensembler
         predictions = self.predict(x_val)
-        print("predictions: ")
-        print(predictions)
-        print("\nreal values: ")
-        print(y_val)
         accuracy = mean_absolute_error(y_val, predictions)
         print('Accuracy on validation set: ')
         print(accuracy)
@@ -65,10 +62,6 @@ class Ensembler(object):
             print("predicting on first layer")
             first_layer_test_predictions[:, i] = self.base_models[i].predict(x)
         #make final predictions on second layer
-        print("what the second layer features look like: ")
-        print(first_layer_test_predictions)
-        print("features shape: ")
-        print(first_layer_test_predictions.shape)
         second_layer_predictions = self.second_layer_model.predict(first_layer_test_predictions)
         return second_layer_predictions
 
@@ -95,7 +88,7 @@ class Ensembler(object):
         ]
 
         print("building plot")
-        py.plot(data, filename='labelled-heatmap')
+        py.plot(data, filename='heatmap')
 
 
     def generateKaggleSubmission(self, sample, prop, train_columns):
@@ -112,6 +105,18 @@ class Ensembler(object):
 
         for c in x_test.dtypes[x_test.dtypes == object].index.values:
             x_test[c] = (x_test[c] == True)
+
+        categorical_cols = ['transaction_month', 'transaction_day', 'transaction_quarter', 'airconditioningtypeid',
+                            'buildingqualitytypeid', 'fips', 'heatingorsystemtypeid', 'propertylandusetypeid',
+                            'regionidcity',
+                            'regionidcounty', 'regionidneighborhood', 'regionidzip', 'yearbuilt']
+        #mean normalization
+        for column in x_test:
+            if column not in categorical_cols:
+                mean = x_test[column].mean()
+                stdev = x_test[column].std()
+                if stdev != 0:
+                    x_test[column] = (x_test[column] - mean) / stdev
 
         test_predictions = self.predict(x_test)
 
