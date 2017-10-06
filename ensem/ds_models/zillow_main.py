@@ -13,6 +13,7 @@ from models import *
 from ensembler import *
 
 #normalize and standardize data?  some categories have extremely high relative values
+#Best validation score:  0.0535038790343
 
 ################################################ Load Data #############################################################
 
@@ -54,21 +55,25 @@ train_columns = x_train.columns
 for c in x_train.dtypes[x_train.dtypes == object].index.values:
     x_train[c] = (x_train[c] == True)
 
-x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=25000)
+x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=27000)
 
 ######################################################## Training ######################################################
 
 print('Training ...')
 
+y_mean = y_train.mean()
 #XGBoost params
 xgb_params = {
-    'eta': 0.037,
-    'max_depth': 5,
-    'subsample': 0.60,
+    'eta': 0.035,
+    'max_depth': 6,
+    'subsample': 0.80,
     'objective': 'reg:linear',
+    'colsample_bytree': 0.9,
     'eval_metric': 'mae',
     'lambda': 0.8,
     'alpha': 0.4,
+    'base_score': y_mean,
+    'seed': 143,
     'silent': 1
 }
 
@@ -99,7 +104,7 @@ ada_params = {
 xgb_params_2 = {
             'eta': 0.037,
             'max_depth': 5,
-            'subsample': 0.60,
+            'subsample': 0.80,
             'objective': 'reg:linear',
             'eval_metric': 'mae',
             'lambda': 0.8,
@@ -123,15 +128,10 @@ first_layer_results = ensemble_model.train(x_train, y_train)
 #create heatmap
 ensemble_model.heatmap(first_layer_results)
 
-################################################## Evaluate on validation set ##########################################
+############################################# Evaluate on validation set ###############################################
 
-#predict on ensembler
-predictions = ensemble_model.predict(x_val, y_val)
-print("predictions: ")
-print(predictions)
-print("\nreal values: ")
-print(y_val)
-accuracy = mean_absolute_error(y_val, predictions)
-print('Accuracy on validation set: ')
-print(accuracy)
+ensemble_model.validation_accuracy(x_val, y_val)
 
+########################################  Predict on Kaggle data and generate submission file ##########################
+
+#ensemble_model.generateKaggleSubmission(sample, prop, train_columns)

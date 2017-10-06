@@ -41,18 +41,24 @@ class Ensembler(object):
             first_layer_train_predictions[:, i] = self.base_models[i].predict(x_val)
 
         #train second layer
-        print("second layer dataset: ")
-        print(first_layer_train_predictions)
-        print("real values: ")
-        print(y_val)
-        #self.second_layer_model.train(first_layer_train_predictions, y_val)
         self.second_layer_model.train(first_layer_train_predictions, y_val)
 
         #we need this value to generate heatmaps
         return first_layer_train_predictions
 
+    def validation_accuracy(self, x_val, y_val):
+        # predict on ensembler
+        predictions = self.predict(x_val)
+        print("predictions: ")
+        print(predictions)
+        print("\nreal values: ")
+        print(y_val)
+        accuracy = mean_absolute_error(y_val, predictions)
+        print('Accuracy on validation set: ')
+        print(accuracy)
 
-    def predict(self, x, y):
+
+    def predict(self, x):
         first_layer_test_predictions = np.zeros((x.shape[0], 5))
         #predict on first layer
         for i in range(len(self.base_models)):
@@ -63,8 +69,6 @@ class Ensembler(object):
         print(first_layer_test_predictions)
         print("features shape: ")
         print(first_layer_test_predictions.shape)
-        print('labels shape: ')
-        print(y.shape)
         second_layer_predictions = self.second_layer_model.predict(first_layer_test_predictions)
         return second_layer_predictions
 
@@ -97,7 +101,6 @@ class Ensembler(object):
     def generateKaggleSubmission(self, sample, prop, train_columns):
 
         """This method predicts on the test set and generates a file that can be submitted to Kaggle.
-        This method is only partially completed.
         """
 
         print('Building test set ...')
@@ -112,9 +115,9 @@ class Ensembler(object):
 
         test_predictions = self.predict(x_test)
 
-        sub = pd.read_csv('submission.csv')
+        sub = pd.read_csv('/Users/kevinluo/Desktop/zillow_data/submission.csv')
         for c in sub.columns[sub.columns != 'ParcelId']:
             sub[c] = test_predictions
 
         print('Writing csv ...')
-        sub.to_csv('submission_file.csv', index=False, float_format='%.4f')
+        sub.to_csv('kaggle_submission.csv', index=False, float_format='%.4f')
