@@ -2,20 +2,19 @@ from __future__ import division
 
 
 import pandas as pd
-import ds_models.utils as dsu
+#import ds_models.utils as dsu
 from sklearn.cross_validation import train_test_split, KFold
 from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, accuracy_score
-from features import *
+#from features import *
 
 
 class Learner(object):
 
-    def __init__(self, algorithm, params):
+    def __init__(self, algorithm):
 
         """ This MUST be overwritten
         """
         self.algorithm = algorithm
-        self.params = params
 
 
     def train(self, x_train, y_train):

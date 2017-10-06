@@ -10,11 +10,13 @@ class XGBoost(Learner):
 
     def __init__(self, params):
         #set algorithm to be xgboost
-        super(xgb, params)
+        super().__init__(None)
+        self.params = params
 
     def train(self, x_train, y_train):
         d_train = xgb.DMatrix(x_train, label=y_train)
-        xgb_model = self.algorithm.train(xgb_params, d_train, early_stopping_rounds=100, verbose_eval=10)
+        watchlist = [(d_train, 'train')]
+        xgb_model = xgb.train(self.params, d_train, 800, watchlist, early_stopping_rounds=100, verbose_eval=10)
         self.algorithm = xgb_model
 
     def predict(self, x_test):
@@ -26,32 +28,33 @@ class ExtraTrees(Learner):
 
     def __init__(self, params):
         #set algorithm to be extratrees
-        super(ExtraTreesRegressor, params)
+        super().__init__(ExtraTreesRegressor(**params))
 
 
 class RandomForest(Learner):
 
     def __init__(self, params):
         #set algorithm to be randomforest
-        super(RandomForestRegressor, params)
+        super().__init__(RandomForestRegressor(**params))
+
 
 
 class AdaBoost(Learner):
 
     def __init__(self, params):
         #set algorithm to be adaboost
-        super(AdaBoostRegressor, params)
+        super().__init__(AdaBoostRegressor(**params))
 
 
 class DecisionTree(Learner):
 
     def __init__(self, params):
         #set algorithm to decisiontree
-        super(DecisionTreeRegressor, params)
+        super().__init__(DecisionTreeRegressor(**params))
 
 
-class LinearRegression(Learner):
+class LinearRegressionModel(Learner):
 
     def __init__(self, params):
         #set algorithm to linear regression
-        super(LinearRegression, params)
+        super().__init__(LinearRegression())

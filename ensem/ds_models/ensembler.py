@@ -1,9 +1,13 @@
 from sklearn.cross_validation import train_test_split, KFold
-from models import LinearRegression
+from sklearn.metrics import mean_absolute_error
+from models import LinearRegression, XGBoost
 #import plotting packages
 import plotly.offline as py
 py.init_notebook_mode(connected=True)
 import plotly.graph_objs as go
+import numpy as np
+import pandas as pd
+import xgboost as xgb
 
 class Ensembler(object):
 
@@ -27,29 +31,40 @@ class Ensembler(object):
             into second layer.
         """
         #Split into test and validation set - we want to send validation results to next layer
-        x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=13750)
-        first_layer_train_predictions = np.empty((x_train.shape[0], 5))
+        x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=18000)
+        first_layer_train_predictions = np.zeros((18000, 5))
 
         #train first layer
-        for i in range(len(base_models)):
+        for i in range(len(self.base_models)):
             print("training baseline model")
-            base_models[i].train(x_train, y_train)
-            first_layer_train_predictions[:, i] = base_models[i].predict(x_val)
+            self.base_models[i].train(x_train, y_train)
+            first_layer_train_predictions[:, i] = self.base_models[i].predict(x_val)
 
         #train second layer
+        print("second layer dataset: ")
+        print(first_layer_train_predictions)
+        print("real values: ")
+        print(y_val)
+        #self.second_layer_model.train(first_layer_train_predictions, y_val)
         self.second_layer_model.train(first_layer_train_predictions, y_val)
 
         #we need this value to generate heatmaps
         return first_layer_train_predictions
 
 
-    def predict(self, x):
-        first_layer_test_predictions = np.empty((x_test.shape[0], 5))
+    def predict(self, x, y):
+        first_layer_test_predictions = np.zeros((x.shape[0], 5))
         #predict on first layer
-        for i in range(len(base_models)):
+        for i in range(len(self.base_models)):
             print("predicting on first layer")
-            first_layer_test_predictions[:, i] = base_models[i].predict(x)
+            first_layer_test_predictions[:, i] = self.base_models[i].predict(x)
         #make final predictions on second layer
+        print("what the second layer features look like: ")
+        print(first_layer_test_predictions)
+        print("features shape: ")
+        print(first_layer_test_predictions.shape)
+        print('labels shape: ')
+        print(y.shape)
         second_layer_predictions = self.second_layer_model.predict(first_layer_test_predictions)
         return second_layer_predictions
 
@@ -82,6 +97,7 @@ class Ensembler(object):
     def generateKaggleSubmission(self, sample, prop, train_columns):
 
         """This method predicts on the test set and generates a file that can be submitted to Kaggle.
+        This method is only partially completed.
         """
 
         print('Building test set ...')
