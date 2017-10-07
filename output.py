@@ -74,7 +74,8 @@ def main():
         # compute output
         output = model(input_var)
         _, output = output.max(1)
-        finalPred = le.inverse_transform(output)
+        print(output)
+        finalPred = le.inverse_transform(output.numpy())
 
         out = np.append([[idx,finalPred]], axis = 0)
 
