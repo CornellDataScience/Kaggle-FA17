@@ -65,7 +65,7 @@ def main():
         
     model.eval()
 
-    out = np.empty([len(output_dataset),2], dtype = '|S20' )
+    out = np.empty([len(output_dataset),2], dtype = '|U20' )
 
     for idx, (input, img) in enumerate(output_dataset):
         input = input.cuda()
@@ -76,7 +76,7 @@ def main():
         _, output = output.max(1)
         finalPred = le.inverse_transform(output.data[0])
 
-        out[idx] = np.array([[img,finalPred]], dtype = '|S20')
+        out[idx] = np.array([[img,finalPred]], dtype = '|U20')
 
     np.savetxt("out.csv", out, delimiter=",", fmt='%s')
     #for image, idx in output_dataset:
