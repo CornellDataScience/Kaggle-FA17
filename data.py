@@ -96,10 +96,10 @@ data_transform2 = transforms.Compose([
                          std=[0.262, 0.257, 0.263])
 ])
 
-dogsOutputDataset = DogsOutputDataset(root_dir="test/",
+output_dataset = DogsOutputDataset(root_dir="test/",
                           transform=data_transform2)
 
 if __name__ == "__main__":
-    idx = dogsOutputDataset[:, 1]
+    idx = [x[1] for x in output_dataset]
 
     print(idx)
