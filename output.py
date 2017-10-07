@@ -77,7 +77,7 @@ def main():
         print(output.data[0])
         finalPred = le.inverse_transform(output.data[0])
 
-        out = np.append([[idx,finalPred]], axis = 0)
+        out = np.append(out, [[idx,finalPred]], axis = 0)
 
     print(out)
 
