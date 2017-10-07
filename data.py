@@ -67,9 +67,43 @@ val_loader = torch.utils.data.DataLoader(
     dogsDataset,
     batch_size=64, shuffle=True, num_workers=4, pin_memory = True)
 
+
+class DogsOutputDataset(Dataset):
+
+    def __init__(self, root_dir, transform=None):
+        tmp_df = pd.read_csv(csv_file)
+        assert tmp_df['id'].apply(lambda x: os.path.isfile(root_dir + x + ".jpg")).all(), \
+            "Some images referenced in the CSV file were not found"
+
+        self.img_path = root_dir
+        self.img_ext = ".jpg"
+        self.transform = transform
+
+        self.img_list = os.listdir(root_dir)
+
+    def __len__(self):
+        return len(self.img_list)
+
+    def __getitem__(self, index):
+        img = Image.open(self.img_path + self.img_list[index])
+        img = img.convert('RGB')
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, self.img_list[index][:-4]
+
+data_transform2 = transforms.Compose([
+    transforms.Scale(64),
+    transforms.CenterCrop(64),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.392, 0.452, 0.476],
+                         std=[0.262, 0.257, 0.263])
+])
+
+dogsOutputDataset = DogsOutputDataset(root_dir="test/",
+                          transform=data_transform2)
+
 if __name__ == "__main__":
-    img, label = dogsDataset[0]
+    img, idx = dogsOutputDataset[0]
 
-    label2 = label.numpy()
-
-    print(le.inverse_transform(np.array([label2])))
+    print(img, idx)
