@@ -13,12 +13,16 @@ from model_super import *
 from models import *
 from ensembler import *
 
-#note:  mean normalization has helped increase validation accuracy
-#note:  mean normalization has even maybe helped decorrelate models?
 #note:  dropping more "useless" columns has decreased validation training time significantly
-#Best validation score:  0.053413687092 (dropped bad columns)
+
+#Best validation score: 0.0518398510732 (Ridge Regression as decider, LGBM and XGBoost, one each)
+#Other scores:  0.0519503944372 (Dropped DecisionTree and RandomForest)
+#Other scores: 0.0520887540916 (K-fold validation with 250 rounds)
+#Other scores: 0.0524806599371 (2nd XGBoost decreasd to 250 rounds + rf - 100 estimators)
+#Other scores: 0.053413687092 (dropped bad columns)
 #Other scores: 0.0534753444281 (added mean normalization)
 #Other scores:  0.0539496646946
+#Other scores:  0.0532557722982 (K-fold validation added with 500 rounds)
 
 ################################################ Load Data #############################################################
 
@@ -61,20 +65,17 @@ categorical_cols = ['transaction_month', 'transaction_day', 'transaction_quarter
                     'buildingqualitytypeid', 'fips', 'heatingorsystemtypeid', 'propertylandusetypeid', 'regionidcity',
                     'regionidcounty', 'regionidneighborhood','regionidzip', 'yearbuilt']
 
-print("data types: ")
-print(x_train.dtypes)
-
 #perform mean normalization
 num_changed = 0
-for column in x_train:
-    if column not in categorical_cols:
-        mean = x_train[column].mean()
-        stdev = x_train[column].std()
-        if stdev != 0:
-            x_train[column] = (x_train[column] - mean) / stdev
-            num_changed += 1
-print("number changed: ")
-print(num_changed)
+#for column in x_train:
+    #if column not in categorical_cols:
+        #mean = x_train[column].mean()
+        #stdev = x_train[column].std()
+        #if stdev != 0:
+            #x_train[column] = (x_train[column] - mean) / stdev
+            #num_changed += 1
+#print("number changed: ")
+#print(num_changed)
 
 train_columns = x_train.columns
 
@@ -95,30 +96,50 @@ xgb_params = {
     'subsample': 0.80,
     'objective': 'reg:linear',
     'colsample_bytree': 0.9,
-    'eval_metric': 'mae',
-    'lambda': 0.8,
-    'alpha': 0.4,
+    'reg_lambda': 0.8,
+    'reg_alpha': 0.4,
     'base_score': y_mean,
-    'seed': 143,
+    'eval_metric': 'mae',
+    'nthread': 4,
+    'random_state': 1,
+    #'seed': 143,
     'silent': 1
 }
 
+#Lightgbm params
+params_1 = {}
+params_1['max_bin'] = 10
+params_1['learning_rate'] = 0.0021 # shrinkage_rate
+params_1['boosting_type'] = 'gbdt'
+params_1['objective'] = 'regression'
+params_1['metric'] = 'mae'          # or 'mae'
+params_1['sub_feature'] = 0.345
+params_1['bagging_fraction'] = 0.85 # sub_row
+params_1['bagging_freq'] = 40
+params_1['bagging_seed'] = 1
+params_1['num_leaves'] = 512        # num_leaf
+#params_1['min_data'] = 500         # min_data_in_leaf
+params_1['min_hessian'] = 0.05     # min_sum_hessian_in_leaf
+params_1['verbose'] = 1
+#params_1['feature_fraction_seed'] = 2
+#params_1['bagging_seed'] = 3
+
 # rf params
 rf_params = {
-    'n_estimators': 50,
+    'n_estimators': 100,
     'max_depth': 8,
     'min_samples_split': 100,
     'min_samples_leaf': 30
 }
 
 #Extra Trees params
-et_params = {
+"""et_params = {
     'n_jobs': -1,
     'n_estimators': 500,
     'max_depth': 8,
     'min_samples_leaf': 2,
     'verbose': 0
-}
+}"""
 
 # AdaBoost parameters
 ada_params = {
@@ -139,25 +160,30 @@ xgb_params_2 = {
         }
 
 #Initialize all of the baseline models
-random_forest = RandomForest(rf_params)
-extra_trees = ExtraTrees(et_params)
-ada_boost = AdaBoost(ada_params)
-decision_tree = DecisionTree({})
-xgboost = XGBoost(xgb_params)
+xgboost_1 = XGBoost(xgb_params, 500)
+lgb_model_1 = LGBM(params_1)
 
-base_models = [random_forest, extra_trees, ada_boost, decision_tree, xgboost]
+base_models = [xgboost_1, lgb_model_1]
 #create an ensembler with the base_models
-#ensemble_model = Ensembler(base_models, LinearRegressionModel({}))
-ensemble_model = Ensembler(base_models, XGBoost(xgb_params_2))
+#ensemble_model = Ensembler(base_models, XGBoost(xgb_params_2, 200))
+#test different rounds again for xgboost
 #train ensembler and save necessary values to create a heatmap
-first_layer_results = ensemble_model.train(x_train, y_train)
+#first_layer_results = ensemble_model.train(x_train, y_train)
 #create heatmap
-ensemble_model.heatmap(first_layer_results)
+#ensemble_model.heatmap(first_layer_results)
+
+#predictions result same across all?  train issues?
 
 ############################################# Evaluate on validation set ###############################################
 
 #ensemble_model.validation_accuracy(x_val, y_val)
+#print('part 2')
+ensemble_model_2 = Ensembler(base_models, RidgeModel())
+first_layer_results_2 = ensemble_model_2.train(x_train, y_train)
+ensemble_model_2.validation_accuracy(x_val, y_val)
+
+
 
 ########################################  Predict on Kaggle data and generate submission file ##########################
 
-ensemble_model.generateKaggleSubmission(sample, prop, train_columns)
+#ensemble_model.generateKaggleSubmission(sample, prop, train_columns)

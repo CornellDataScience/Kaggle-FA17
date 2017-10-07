@@ -1,5 +1,6 @@
-from sklearn.cross_validation import train_test_split, KFold
+from sklearn.cross_validation import train_test_split
 from sklearn.metrics import mean_absolute_error
+from sklearn.model_selection import KFold
 from models import LinearRegression, XGBoost
 #import plotting packages
 import plotly.offline as py
@@ -31,17 +32,32 @@ class Ensembler(object):
             into second layer.
         """
         #Split into test and validation set - we want to send validation results to next layer
-        x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=18000)
-        first_layer_train_predictions = np.zeros((18000, 5))
+        #x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=18000)
+
+        x = np.array(x)
+        y = np.array(y)
+
+        kf = KFold(n_splits=5)
+        folds = list(kf.split(x, y))
+
+        first_layer_train_predictions = np.zeros((x.shape[0], len(self.base_models)))
 
         #train first layer
         for i in range(len(self.base_models)):
             print("training baseline model")
-            self.base_models[i].train(x_train, y_train)
-            first_layer_train_predictions[:, i] = self.base_models[i].predict(x_val)
+            for j, (train_idx, test_idx) in enumerate(folds):
+                x_train_fold = x[train_idx]
+                y_train_fold = y[train_idx]
+                x_holdout_fold = x[test_idx]
+                y_holdout_fold = y[test_idx]
+                self.base_models[i].train(x_train_fold, y_train_fold)
+                first_layer_train_predictions[test_idx, i] = self.base_models[i].predict(x_holdout_fold)
+                #check that this above is correct in where we are putting values
 
         #train second layer
-        self.second_layer_model.train(first_layer_train_predictions, y_val)
+        print("first layer train predictions: ")
+        print(first_layer_train_predictions)
+        self.second_layer_model.train(first_layer_train_predictions, y)
 
         #we need this value to generate heatmaps
         return first_layer_train_predictions
@@ -50,13 +66,17 @@ class Ensembler(object):
     def validation_accuracy(self, x_val, y_val):
         # predict on ensembler
         predictions = self.predict(x_val)
+        print('predictions: ')
+        print(predictions)
+        print("real")
+        print(y_val)
         accuracy = mean_absolute_error(y_val, predictions)
         print('Accuracy on validation set: ')
         print(accuracy)
 
 
     def predict(self, x):
-        first_layer_test_predictions = np.zeros((x.shape[0], 5))
+        first_layer_test_predictions = np.zeros((x.shape[0], len(self.base_models)))
         #predict on first layer
         for i in range(len(self.base_models)):
             print("predicting on first layer")
@@ -69,11 +89,12 @@ class Ensembler(object):
     def heatmap(self, first_layer_train_predictions):
         print("building dataframe for correlation visual")
 
-        base_predictions_train = pd.DataFrame({'RandomForest': first_layer_train_predictions[0].ravel(),
-                                               'ExtraTrees': first_layer_train_predictions[1].ravel(),
-                                               'AdaBoost': first_layer_train_predictions[2].ravel(),
-                                               'GradientBoost': first_layer_train_predictions[3].ravel(),
-                                               'XGBoost': first_layer_train_predictions[4].ravel()
+        base_predictions_train = pd.DataFrame({#'RandomForest': first_layer_train_predictions[0].ravel(),
+                                               'XGBoost1': first_layer_train_predictions[0].ravel(),
+                                               #'XGBoost2': first_layer_train_predictions[1].ravel(),
+                                               #'Decision Tree': first_layer_train_predictions[3].ravel(),
+                                               #'XGBoost3': first_layer_train_predictions[2].ravel(),
+                                                'Lightgbm': first_layer_train_predictions[1].ravel()
                                                })
 
         data = [
@@ -111,12 +132,12 @@ class Ensembler(object):
                             'regionidcity',
                             'regionidcounty', 'regionidneighborhood', 'regionidzip', 'yearbuilt']
         #mean normalization
-        for column in x_test:
-            if column not in categorical_cols:
-                mean = x_test[column].mean()
-                stdev = x_test[column].std()
-                if stdev != 0:
-                    x_test[column] = (x_test[column] - mean) / stdev
+        #for column in x_test:
+            #if column not in categorical_cols:
+                #mean = x_test[column].mean()
+                #stdev = x_test[column].std()
+                #if stdev != 0:
+                    #x_test[column] = (x_test[column] - mean) / stdev
 
         test_predictions = self.predict(x_test)
 
