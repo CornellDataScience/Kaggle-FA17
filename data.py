@@ -71,10 +71,6 @@ val_loader = torch.utils.data.DataLoader(
 class DogsOutputDataset(Dataset):
 
     def __init__(self, root_dir, transform=None):
-        tmp_df = pd.read_csv(csv_file)
-        assert tmp_df['id'].apply(lambda x: os.path.isfile(root_dir + x + ".jpg")).all(), \
-            "Some images referenced in the CSV file were not found"
-
         self.img_path = root_dir
         self.img_ext = ".jpg"
         self.transform = transform
