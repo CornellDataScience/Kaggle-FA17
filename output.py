@@ -73,7 +73,8 @@ def main():
 
         # compute output
         output = model(input_var)
-        finalPred = le.inverse_transform(torch.max(output, 1))
+        _, output = output.max(1)
+        finalPred = le.inverse_transform(output)
 
         out = np.append([[idx,finalPred]], axis = 0)
 
