@@ -11,6 +11,7 @@ import torch.optim
 import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+import numpy as np
 
 import densenet as dn
 
@@ -58,6 +59,7 @@ def main():
 
     if os.path.isfile(args.model):
         checkpoint = torch.load(args.model)
+        print(checkpoint['state_dict'])
         model.load_state_dict(checkpoint['state_dict'])
     else:
         print("no such model")
