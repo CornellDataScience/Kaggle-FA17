@@ -78,7 +78,7 @@ def main():
 
         out[idx] = np.array([[img,finalPred]], dtype = '|S20')
 
-    np.savetxt("out.csv", out, delimiter=",")
+    np.savetxt("out.csv", out, delimiter=",", fmt='%s')
     #for image, idx in output_dataset:
 
 if __name__ == '__main__':
