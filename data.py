@@ -100,6 +100,6 @@ dogsOutputDataset = DogsOutputDataset(root_dir="test/",
                           transform=data_transform2)
 
 if __name__ == "__main__":
-    img, idx = dogsOutputDataset[0]
+    idx = dogsOutputDataset[:, 1]
 
-    print(img, idx)
+    print(idx)
