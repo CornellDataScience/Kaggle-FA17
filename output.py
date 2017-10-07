@@ -65,7 +65,7 @@ def main():
         
     model.eval()
 
-    out = np.empty([len(output_dataset),2], dtype = String )
+    out = np.empty([len(output_dataset),2], dtype = str )
 
     for idx, (input, img) in enumerate(output_dataset):
         input = input.cuda()
@@ -77,7 +77,7 @@ def main():
         print(output.data[0])
         finalPred = le.inverse_transform(output.data[0])
 
-        out[idx] = np.array([[img,finalPred]], dtype = String)
+        out[idx] = np.array([[img,finalPred]], dtype = str)
 
     print(out)
 
