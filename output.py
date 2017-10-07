@@ -37,8 +37,8 @@ def main():
         sys.exit()
 
     # get the number of model parameters
-    print('Number of model parameters: {}'.format(
-        sum([p.data.nelement() for p in model.parameters()])))
+    #print('Number of model parameters: {}'.format(
+     #   sum([p.data.nelement() for p in model.parameters()])))
     
     # for training on multiple GPUs. 
     # Use CUDA_VISIBLE_DEVICES=0,1 to specify which GPUs to use
