@@ -59,10 +59,8 @@ def main():
 
     if os.path.isfile(args.model):
         checkpoint = torch.load(args.model)
-        print(checkpoint['state_dict'])
         model.load_state_dict(checkpoint['state_dict'])
     else:
-        print("no such model")
         sys.exit()
         
     model.eval()
@@ -71,7 +69,7 @@ def main():
 
     for input, idx in output_dataset:
         input = input.cuda()
-        input_var = torch.autograd.Variable(input, volatile=True)
+        input_var = torch.autograd.Variable(input, volatile=True).unsqueeze(0)
 
         # compute output
         output = model(input_var)
