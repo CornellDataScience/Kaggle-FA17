@@ -65,9 +65,9 @@ def main():
         
     model.eval()
 
-    out = np.array([])
+    out = np.empty([len(output_dataset),2])
 
-    for input, idx in output_dataset:
+    for idx, (input, img) in enumerate(output_dataset):
         input = input.cuda()
         input_var = torch.autograd.Variable(input, volatile=True).unsqueeze(0)
 
@@ -77,7 +77,7 @@ def main():
         print(output.data[0])
         finalPred = le.inverse_transform(output.data[0])
 
-        out = np.append(out, [[idx,finalPred]], axis = 0)
+        out[idx] = np.array([[img,finalPred]])
 
     print(out)
 
