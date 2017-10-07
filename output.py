@@ -74,7 +74,6 @@ def main():
         # compute output
         output = model(input_var)
         _, output = output.max(1)
-        print(output.data[0])
         finalPred = le.inverse_transform(output.data[0])
 
         out[idx] = np.array([[img,finalPred]], dtype = str)
