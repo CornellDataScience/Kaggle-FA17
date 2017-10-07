@@ -31,7 +31,7 @@ def main():
 
     # create model
     if os.path.isfile(args.model):
-        model = torch.load(args.resume)
+        model = torch.load(args.model)
     else:
         print("no such model")
         sys.exit()
