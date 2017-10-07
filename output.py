@@ -65,7 +65,7 @@ def main():
         
     model.eval()
 
-    out = np.empty([len(output_dataset),2])
+    out = np.empty([len(output_dataset),2], dtype = String )
 
     for idx, (input, img) in enumerate(output_dataset):
         input = input.cuda()
