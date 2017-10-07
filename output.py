@@ -77,7 +77,7 @@ def main():
         print(output.data[0])
         finalPred = le.inverse_transform(output.data[0])
 
-        out[idx] = np.array([[img,finalPred]])
+        out[idx] = np.array([[img,finalPred]], dtype = String)
 
     print(out)
 
