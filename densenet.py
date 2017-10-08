@@ -113,6 +113,6 @@ class DenseNet3(nn.Module):
         out = self.trans2(self.block2(out))
         out = self.block3(out)
         out = self.relu(self.bn1(out))
-        out = F.avg_pool2d(out, 22)
+        out = F.avg_pool2d(out, out.size()[2])
         out = out.view(-1, self.in_planes)
         return self.fc(out)

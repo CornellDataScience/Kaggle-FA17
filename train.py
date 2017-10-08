@@ -20,13 +20,13 @@ from tensorboard_logger import configure, log_value
 from data import train_loader, val_loader
 
 parser = argparse.ArgumentParser(description='PyTorch DenseNet Training')
-parser.add_argument('--epochs', default=300, type=int,
+parser.add_argument('--epochs', default=180, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=64, type=int,
                     help='mini-batch size (default: 64)')
-parser.add_argument('--lr', '--learning-rate', default=0.3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.5, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
@@ -37,7 +37,7 @@ parser.add_argument('--layers', default=100, type=int,
                     help='total number of layers (default: 100)')
 parser.add_argument('--growth', default=12, type=int,
                     help='number of new channels per layer (default: 12)')
-parser.add_argument('--droprate', default=0.2, type=float,
+parser.add_argument('--droprate', default=0, type=float,
                     help='dropout probability (default: 0.0)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
@@ -240,7 +240,7 @@ class AverageMeter(object):
 
 def adjust_learning_rate(optimizer, epoch):
     """Sets the learning rate to the initial LR decayed by 10 after 150 and 225 epochs"""
-    lr = args.lr * (0.1 ** (epoch // 150)) * (0.1 ** (epoch // 220))
+    lr = args.lr * (0.2 ** (epoch // 80)) * (0.2 ** (epoch // 140))
     # log to TensorBoard
     if args.tensorboard:
         log_value('learning_rate', lr, epoch)

@@ -11,6 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 
 le = LabelEncoder()
 
+croppedSize = 48
 
 class DogsDataset(Dataset):
 
@@ -68,7 +69,8 @@ class DogsDatasetTest(Dataset):
 
 
 data_transform = transforms.Compose([
-    transforms.RandomSizedCrop(88),
+    transforms.Scale(croppedSize),
+    transforms.RandomSizedCrop(croppedSize),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.392, 0.452, 0.476],
@@ -76,8 +78,8 @@ data_transform = transforms.Compose([
 ])
 
 transform_test = transforms.Compose([
-    transforms.Scale(88),
-    transforms.CenterCrop(88),
+    transforms.Scale(croppedSize),
+    transforms.CenterCrop(croppedSize),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.392, 0.452, 0.476],
                          std=[0.262, 0.257, 0.263])
@@ -119,8 +121,8 @@ class DogsOutputDataset(Dataset):
         return img, self.img_list[index][:-4]
 
 data_transform2 = transforms.Compose([
-    transforms.Scale(88),
-    transforms.CenterCrop(88),
+    transforms.Scale(croppedSize),
+    transforms.CenterCrop(croppedSize),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.392, 0.452, 0.476],
                          std=[0.262, 0.257, 0.263])
