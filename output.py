@@ -12,6 +12,7 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import numpy as np
+import pandas as pd
 
 import densenet as dn
 
@@ -65,21 +66,24 @@ def main():
         
     model.eval()
 
-    out = np.empty([len(output_dataset),2], dtype = '|U20' )
+    out = pd.read_csv('sample_submission.csv')
 
-    for idx, (input, img) in enumerate(output_dataset):
+    out = out.set_index("id")
+
+    for input, img in output_dataset:
         input = input.cuda()
         input_var = torch.autograd.Variable(input, volatile=True).unsqueeze(0)
 
         # compute output
-        output = model(input_var)
-        _, output = output.max(1)
-        finalPred = le.inverse_transform(output.data[0])
+        output = torch.nn.functional.softmax(model(input_var))
 
-        out[idx] = np.array([[img,finalPred]], dtype = '|U20')
+        #print(output[0].data.numpy())
+        print(img)
 
-    np.savetxt("out.csv", out, delimiter=",", fmt='%s')
-    #for image, idx in output_dataset:
+        print(output[0].data.cpu().numpy())
+
+        out.loc[img] = output[0].data.cpu().numpy()
+    out.to_csv("out.csv")
 
 if __name__ == '__main__':
     main()

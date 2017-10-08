@@ -23,9 +23,37 @@ class DogsDataset(Dataset):
         self.img_ext = ".jpg"
         self.transform = transform
 
-        self.X_train = tmp_df['id']
+        self.X_train = tmp_df['id'][:9000]
         self.y_train = le.fit_transform(
-            tmp_df['breed'])
+            tmp_df['breed'])[:9000]
+
+    def __len__(self):
+        return len(self.X_train.index)
+
+    def __getitem__(self, index):
+        img = Image.open(self.img_path + self.X_train[index] + self.img_ext)
+        img = img.convert('RGB')
+        if self.transform is not None:
+            img = self.transform(img)       
+
+        label = self.y_train[index]
+        return img, label
+
+
+class DogsDatasetTest(Dataset):
+
+    def __init__(self, csv_file, root_dir, transform=None):
+        tmp_df = pd.read_csv(csv_file)
+        assert tmp_df['id'].apply(lambda x: os.path.isfile(root_dir + x + ".jpg")).all(), \
+            "Some images referenced in the CSV file were not found"
+
+        self.img_path = root_dir
+        self.img_ext = ".jpg"
+        self.transform = transform
+
+        self.X_train = tmp_df['id'][9000:].reset_index(drop=True)
+        self.y_train = le.fit_transform(
+            tmp_df['breed'])[9000:]
 
     def __len__(self):
         return len(self.X_train.index)
@@ -35,13 +63,12 @@ class DogsDataset(Dataset):
         img = img.convert('RGB')
         if self.transform is not None:
             img = self.transform(img)
-
         label = self.y_train[index]
         return img, label
 
+
 data_transform = transforms.Compose([
-    transforms.Scale(68),
-    transforms.RandomSizedCrop(64),
+    transforms.RandomSizedCrop(88),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.392, 0.452, 0.476],
@@ -49,8 +76,8 @@ data_transform = transforms.Compose([
 ])
 
 transform_test = transforms.Compose([
-    transforms.Scale(64),
-    transforms.CenterCrop(64),
+    transforms.Scale(88),
+    transforms.CenterCrop(88),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.392, 0.452, 0.476],
                          std=[0.262, 0.257, 0.263])
@@ -59,13 +86,16 @@ transform_test = transforms.Compose([
 dogsDataset = DogsDataset(csv_file="labels.csv", root_dir="train/",
                           transform=data_transform)
 
+dogsDatasetTest = DogsDatasetTest(csv_file="labels.csv", root_dir="train/",
+                          transform=data_transform)
+
 train_loader = torch.utils.data.DataLoader(dogsDataset,
                                              batch_size=64, shuffle=True,
-                                             num_workers=4, pin_memory = True)
+                                             num_workers=4)
 
 val_loader = torch.utils.data.DataLoader(
-    dogsDataset,
-    batch_size=64, shuffle=True, num_workers=4, pin_memory = True)
+    dogsDatasetTest,
+    batch_size=64, shuffle=True, num_workers=4)
 
 
 class DogsOutputDataset(Dataset):
@@ -89,8 +119,8 @@ class DogsOutputDataset(Dataset):
         return img, self.img_list[index][:-4]
 
 data_transform2 = transforms.Compose([
-    transforms.Scale(64),
-    transforms.CenterCrop(64),
+    transforms.Scale(88),
+    transforms.CenterCrop(88),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.392, 0.452, 0.476],
                          std=[0.262, 0.257, 0.263])
@@ -100,6 +130,9 @@ output_dataset = DogsOutputDataset(root_dir="test/",
                           transform=data_transform2)
 
 if __name__ == "__main__":
-    idx = [x[1] for x in output_dataset]
+    # idx = [x[1] for x in output_dataset]
+    a = dogsDataset[0]
 
-    print(idx)
+    print(a)
+
+    print(le.transform(["affenpinscher", "afghan_hound"]))
