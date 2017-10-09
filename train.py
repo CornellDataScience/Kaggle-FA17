@@ -13,6 +13,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
 import densenet as dn
+import resnet as rn
 
 # used for logging to TensorBoard
 from tensorboard_logger import configure, log_value
@@ -66,9 +67,10 @@ def main():
                                      std=[x/255.0 for x in [63.0, 62.1, 66.7]])
     
     # create model
-    model = dn.DenseNet3(args.layers, 120, args.growth, reduction=args.reduce,
-                         bottleneck=args.bottleneck, dropRate=args.droprate)
-    
+    # model = dn.DenseNet3(args.layers, 120, args.growth, reduction=args.reduce,
+    #                     bottleneck=args.bottleneck, dropRate=args.droprate)
+    model = rn.ResNetTransfer(args.depth, 120, dropRate=args.droprate)
+
     # get the number of model parameters
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))

@@ -69,7 +69,6 @@ class DogsDatasetTest(Dataset):
 
 
 data_transform = transforms.Compose([
-    transforms.Scale(croppedSize),
     transforms.RandomSizedCrop(croppedSize),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
