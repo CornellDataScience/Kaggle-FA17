@@ -11,10 +11,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="zillow_main.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="zillow_main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/zillow_main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-742">
+            <state relative-caret-position="2130">
               <caret line="142" column="21" lean-forward="false" selection-start-line="142" selection-start-column="21" selection-end-line="142" selection-end-column="21" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
@@ -27,7 +27,7 @@
         <entry file="file://$PROJECT_DIR$/ensembler.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="484">
-              <caret line="45" column="43" lean-forward="true" selection-start-line="45" selection-start-column="43" selection-end-line="45" selection-end-column="43" />
+              <caret line="45" column="43" lean-forward="false" selection-start-line="45" selection-start-column="43" selection-end-line="45" selection-end-column="43" />
               <folding>
                 <element signature="e#0#53#0" expanded="true" />
               </folding>
@@ -38,8 +38,8 @@
       <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/models.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="406">
-              <caret line="48" column="31" lean-forward="false" selection-start-line="48" selection-start-column="31" selection-end-line="48" selection-end-column="31" />
+            <state relative-caret-position="506">
+              <caret line="67" column="21" lean-forward="false" selection-start-line="59" selection-start-column="4" selection-end-line="67" selection-end-column="21" />
               <folding>
                 <element signature="e#0#31#0" expanded="true" />
               </folding>
@@ -59,14 +59,34 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ensem_testversion.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="ensem_testversion.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ensem_testversion.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="113">
-              <caret line="299" column="24" lean-forward="false" selection-start-line="299" selection-start-column="24" selection-end-line="299" selection-end-column="24" />
+            <state relative-caret-position="540">
+              <caret line="36" column="36" lean-forward="true" selection-start-line="36" selection-start-column="36" selection-end-line="36" selection-end-column="36" />
               <folding>
                 <element signature="e#0#39#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="data_processing.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/data_processing.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="638">
+              <caret line="63" column="27" lean-forward="true" selection-start-line="63" selection-start-column="27" selection-end-line="63" selection-end-column="27" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="parameters.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/parameters.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="135">
+              <caret line="9" column="23" lean-forward="true" selection-start-line="9" selection-start-column="23" selection-end-line="9" selection-end-column="23" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -89,9 +109,12 @@
         <option value="$PROJECT_DIR$/iteration3.csv" />
         <option value="$PROJECT_DIR$/example.csv" />
         <option value="$PROJECT_DIR$/iteration4.csv" />
-        <option value="$PROJECT_DIR$/ensem_testversion.py" />
         <option value="$PROJECT_DIR$/zillow_main.py" />
         <option value="$PROJECT_DIR$/ensembler.py" />
+        <option value="$PROJECT_DIR$/iteration5.csv" />
+        <option value="$PROJECT_DIR$/parameters.py" />
+        <option value="$PROJECT_DIR$/data_processing.py" />
+        <option value="$PROJECT_DIR$/ensem_testversion.py" />
       </list>
     </option>
   </component>
@@ -189,7 +212,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="1" />
+      <option name="time" value="2" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -267,12 +290,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/models.py">
+    <entry file="file://$PROJECT_DIR$/ensembler.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="406">
-          <caret line="48" column="31" lean-forward="false" selection-start-line="48" selection-start-column="31" selection-end-line="48" selection-end-column="31" />
+        <state relative-caret-position="484">
+          <caret line="45" column="43" lean-forward="false" selection-start-line="45" selection-start-column="43" selection-end-line="45" selection-end-column="43" />
           <folding>
-            <element signature="e#0#31#0" expanded="true" />
+            <element signature="e#0#53#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -287,32 +310,64 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ensem_testversion.py">
+    <entry file="file://$PROJECT_DIR$/models.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="113">
-          <caret line="299" column="24" lean-forward="false" selection-start-line="299" selection-start-column="24" selection-end-line="299" selection-end-column="24" />
+        <state relative-caret-position="506">
+          <caret line="67" column="21" lean-forward="false" selection-start-line="59" selection-start-column="4" selection-end-line="67" selection-end-column="21" />
           <folding>
-            <element signature="e#0#39#0" expanded="true" />
+            <element signature="e#0#31#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ensembler.py">
+    <entry file="file://$PROJECT_DIR$/iteration5.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="484">
-          <caret line="45" column="43" lean-forward="true" selection-start-line="45" selection-start-column="43" selection-end-line="45" selection-end-column="43" />
-          <folding>
-            <element signature="e#0#53#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/zillow_main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-742">
+        <state relative-caret-position="2130">
           <caret line="142" column="21" lean-forward="false" selection-start-line="142" selection-start-column="21" selection-end-line="142" selection-end-column="21" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/iteration5.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" column="0" lean-forward="true" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/parameters.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" column="23" lean-forward="true" selection-start-line="9" selection-start-column="23" selection-end-line="9" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_processing.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="638">
+          <caret line="63" column="27" lean-forward="true" selection-start-line="63" selection-start-column="27" selection-end-line="63" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ensem_testversion.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="540">
+          <caret line="36" column="36" lean-forward="true" selection-start-line="36" selection-start-column="36" selection-end-line="36" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#39#0" expanded="true" />
           </folding>
         </state>
       </provider>
