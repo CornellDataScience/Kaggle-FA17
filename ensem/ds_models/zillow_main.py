@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import xgboost as xgb
+from xgboost import XGBRegressor
 
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import mean_absolute_error
@@ -115,14 +116,16 @@ for c, dtype in zip(x_train.columns, x_train.dtypes):
 
 y_train = train_df['logerror'].values
 
-x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=27000)
-print("validation shape: ")
-print(y_val.shape)
+#x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=27000)
+#print("validation shape: ")
+#print(y_val.shape)
 
-#test_df['transactiondate'] = pd.Timestamp('2016-12-01')  # Dummy
-#test_df = add_date_features(test_df)
-#X_test = test_df[train_features]
-#print(X_test.shape)
+test_df['transactiondate'] = pd.Timestamp('2016-12-01')  # Dummy
+test_df = add_date_features(test_df)
+X_test = test_df[train_features]
+for c in X_test.dtypes[X_test.dtypes == object].index.values:
+    X_test[c] = (X_test[c] == True)
+print(X_test.shape)
 
 ######################################################## Training ######################################################
 
@@ -197,16 +200,9 @@ ada_params = {
 }
 
 #Second Layer XGBoost parameters
-xgb_params_2 = {
-            'eta': 0.037,
-            'max_depth': 5,
-            'subsample': 0.80,
-            'objective': 'reg:linear',
-            'eval_metric': 'mae',
-            'lambda': 0.8,
-            'alpha': 0.4,
-            'silent': 1
-        }
+xgb_params_2 = {'learning_rate': 0.041320682119474678, 'subsample': 0.7544297265725215,
+                'reg_lambda': 3.7966350899885803, 'max_depth': 2, 'reg_alpha': 0.13659517451090278, 'n_estimators': 186,
+                'objective': 'reg:linear', 'eval_metric': 'mae', 'silent': 1}
 
 elastic_net_params = {
     'alpha': 0.57541585223123481
@@ -216,11 +212,11 @@ elastic_net_params = {
 xgboost_1 = XGBoost(xgb_params, 500)
 lgb_model_1 = LGBM(params_1)
 catboost = CatBoostModel(catboost_params, cat_feature_inds)
-randomForest = RandomForest(rf_params)
+#randomForest = RandomForest(rf_params)
 
-base_models = [randomForest, xgboost_1, catboost, lgb_model_1]
+base_models = [xgboost_1, catboost, lgb_model_1]
 #create an ensembler with the base_models
-ensemble_model = Ensembler(base_models, ElasticNetModel(elastic_net_params))
+ensemble_model = Ensembler(base_models, XGBRegressor(**xgb_params_2))
 
 #train ensembler and save necessary values to create a heatmap
 first_layer_results = ensemble_model.train(x_train, y_train)
@@ -232,8 +228,8 @@ ensemble_model.heatmap(first_layer_results)
 
 ############################################# Evaluate on validation set ###############################################
 
-ensemble_model.validation_accuracy(x_val, y_val)
+#ensemble_model.validation_accuracy(x_val, y_val)
 
 ########################################  Predict on Kaggle data and generate submission file ##########################
 
-#ensemble_model.generateKaggleSubmission(sample, prop, train_columns)"""
+ensemble_model.generateKaggleSubmission(X_test)

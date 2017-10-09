@@ -33,7 +33,7 @@ class Ensembler(object):
         x = np.array(x)
         y = np.array(y)
 
-        kf = KFold(n_splits=5)
+        kf = KFold(n_splits=4)
         folds = list(kf.split(x, y))
 
         first_layer_train_predictions = np.zeros((x.shape[0], len(self.base_models)))
@@ -52,7 +52,8 @@ class Ensembler(object):
         #train second layer
         print("first layer train predictions: ")
         print(first_layer_train_predictions)
-        self.second_layer_model.train(first_layer_train_predictions, y)
+        #self.second_layer_model.train(first_layer_train_predictions, y)
+        self.second_layer_model.fit(first_layer_train_predictions, y)
 
         #Wipe train history with full train
         for i in range(len(self.base_models)):
@@ -89,10 +90,10 @@ class Ensembler(object):
     def heatmap(self, first_layer_train_predictions):
         print("building dataframe for correlation visual")
 
-        base_predictions_train = pd.DataFrame({'RandomForest': first_layer_train_predictions[0].ravel(),
-                                               'XGBoost1': first_layer_train_predictions[1].ravel(),
-                                                'CatBoost': first_layer_train_predictions[2].ravel(),
-                                                'LightGBM':  first_layer_train_predictions[3].ravel()
+        base_predictions_train = pd.DataFrame({#'RandomForest': first_layer_train_predictions[0].ravel(),
+                                               'XGBoost1': first_layer_train_predictions[0].ravel(),
+                                                'CatBoost': first_layer_train_predictions[1].ravel(),
+                                                'LightGBM':  first_layer_train_predictions[2].ravel()
                                                })
 
         data = [
@@ -110,22 +111,22 @@ class Ensembler(object):
         py.plot(data, filename='heatmap')
 
 
-    def generateKaggleSubmission(self, sample, prop, train_columns):
+    def generateKaggleSubmission(self, x_test):
 
         """This method predicts on the test set and generates a file that can be submitted to Kaggle.
         """
 
         #REMEMBER TO DO CATBOOST DATA CLEANING HERE AS WELL
 
-        print('Building test set ...')
+        print('Predicting on test ...')
 
-        sample['parcelid'] = sample['ParcelId']
-        df_test = sample.merge(prop, on='parcelid', how='left')
+        #sample['parcelid'] = sample['ParcelId']
+        #df_test = sample.merge(prop, on='parcelid', how='left')
 
-        x_test = df_test[train_columns]
+        #x_test = df_test[train_columns]
 
-        for c in x_test.dtypes[x_test.dtypes == object].index.values:
-            x_test[c] = (x_test[c] == True)
+        #for c in x_test.dtypes[x_test.dtypes == object].index.values:
+            #x_test[c] = (x_test[c] == True)
 
         categorical_cols = ['transaction_month', 'transaction_day', 'transaction_quarter', 'airconditioningtypeid',
                             'buildingqualitytypeid', 'fips', 'heatingorsystemtypeid', 'propertylandusetypeid',
