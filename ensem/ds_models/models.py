@@ -1,13 +1,14 @@
 from model_super import Learner
 
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, AdaBoostRegressor, BaggingRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, ElasticNet
 from sklearn.tree import DecisionTreeRegressor
 from catboost import CatBoostRegressor
 from sklearn.linear_model import Ridge
 import xgboost as xgb
 import lightgbm as lgb
 import numpy as np
+from tqdm import tqdm
 
 class XGBoost(Learner):
 
@@ -16,7 +17,6 @@ class XGBoost(Learner):
         super().__init__(None)
         self.params = params
         self.num_rounds = num_rounds
-
 
 
     def train(self, x_train, y_train):
@@ -46,8 +46,26 @@ class LGBM(Learner):
 
 class CatBoostModel(Learner):
 
-    def __init__(self, parameters):
-        super().__init__(CatBoostRegressor(**parameters))
+    def __init__(self, parameters, cat_feature_inds):
+        super().__init__(None)
+        self.cat_feature_inds = cat_feature_inds
+        self.models = []
+        for i in range(5):
+            self.models.append(CatBoostRegressor(**parameters, random_seed=i))
+
+    def train(self, x_train, y_train):
+        for i in tqdm(range(5)):
+            self.models[i].fit(x_train, y_train, cat_features=self.cat_feature_inds)
+
+    def predict(self, x_test):
+        result = 0.0
+        for model in self.models:
+            print("predicting on catboost")
+            result += model.predict(x_test, verbose=True)
+        result /= 5
+        print('result: ')
+        print(result)
+        return result
 
 
 class ExtraTrees(Learner):
@@ -78,6 +96,10 @@ class DecisionTree(Learner):
         #set algorithm to decisiontree
         super().__init__(BaggingRegressor(DecisionTreeRegressor(**params), max_samples=0.6, max_features=0.9))
 
+class ElasticNetModel(Learner):
+
+    def __init__(self, params):
+        super().__init__(ElasticNet(**params))
 
 class LinearRegressionModel(Learner):
 

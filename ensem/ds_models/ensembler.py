@@ -21,7 +21,6 @@ class Ensembler(object):
         """ base_models is a list of the ML algorithms whose results are ensembled upon.
             second_layer_model is the model we train on the predictions of the base_models.
         """
-
         self.base_models = base_models
         self.second_layer_model = second_layer_model
 
@@ -31,9 +30,6 @@ class Ensembler(object):
         """ Trains the ensemble. Uses cross validation during training to prevent data leakage
             into second layer.
         """
-        #Split into test and validation set - we want to send validation results to next layer
-        #x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=18000)
-
         x = np.array(x)
         y = np.array(y)
 
@@ -52,12 +48,16 @@ class Ensembler(object):
                 y_holdout_fold = y[test_idx]
                 self.base_models[i].train(x_train_fold, y_train_fold)
                 first_layer_train_predictions[test_idx, i] = self.base_models[i].predict(x_holdout_fold)
-                #check that this above is correct in where we are putting values
 
         #train second layer
         print("first layer train predictions: ")
         print(first_layer_train_predictions)
         self.second_layer_model.train(first_layer_train_predictions, y)
+
+        #Wipe train history with full train
+        for i in range(len(self.base_models)):
+            print("Final train: ")
+            self.base_models[i].train(x, y)
 
         #we need this value to generate heatmaps
         return first_layer_train_predictions
@@ -89,12 +89,10 @@ class Ensembler(object):
     def heatmap(self, first_layer_train_predictions):
         print("building dataframe for correlation visual")
 
-        base_predictions_train = pd.DataFrame({#'RandomForest': first_layer_train_predictions[0].ravel(),
-                                               'XGBoost1': first_layer_train_predictions[0].ravel(),
-                                               #'XGBoost2': first_layer_train_predictions[1].ravel(),
-                                               #'Decision Tree': first_layer_train_predictions[3].ravel(),
-                                               #'XGBoost3': first_layer_train_predictions[2].ravel(),
-                                                'Lightgbm': first_layer_train_predictions[1].ravel()
+        base_predictions_train = pd.DataFrame({'RandomForest': first_layer_train_predictions[0].ravel(),
+                                               'XGBoost1': first_layer_train_predictions[1].ravel(),
+                                                'CatBoost': first_layer_train_predictions[2].ravel(),
+                                                'LightGBM':  first_layer_train_predictions[3].ravel()
                                                })
 
         data = [
@@ -117,6 +115,8 @@ class Ensembler(object):
         """This method predicts on the test set and generates a file that can be submitted to Kaggle.
         """
 
+        #REMEMBER TO DO CATBOOST DATA CLEANING HERE AS WELL
+
         print('Building test set ...')
 
         sample['parcelid'] = sample['ParcelId']
@@ -131,13 +131,7 @@ class Ensembler(object):
                             'buildingqualitytypeid', 'fips', 'heatingorsystemtypeid', 'propertylandusetypeid',
                             'regionidcity',
                             'regionidcounty', 'regionidneighborhood', 'regionidzip', 'yearbuilt']
-        #mean normalization
-        #for column in x_test:
-            #if column not in categorical_cols:
-                #mean = x_test[column].mean()
-                #stdev = x_test[column].std()
-                #if stdev != 0:
-                    #x_test[column] = (x_test[column] - mean) / stdev
+
 
         test_predictions = self.predict(x_test)
 
