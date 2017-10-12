@@ -1,6 +1,3 @@
-from __future__ import division
-
-
 import pandas as pd
 from sklearn.cross_validation import train_test_split, KFold
 from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, accuracy_score

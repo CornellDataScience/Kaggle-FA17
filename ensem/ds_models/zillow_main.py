@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 from xgboost import XGBRegressor
-
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import mean_absolute_error
 from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
@@ -10,21 +9,12 @@ from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import LinearRegression
 from catboost import CatBoostRegressor
 from tqdm import tqdm
-
 from models import *
 from ensembler import *
-
-#note:  dropping more "useless" columns has decreased validation training time significantly
+from parameters import *
 
 #Best validation score: 0.0518398510732 (Ridge Regression as decider, LGBM and XGBoost, one each)
 #Other scores:  0.0519503944372 (Dropped DecisionTree and RandomForest)
-#Other scores: 0.0520887540916 (K-fold validation with 250 rounds)
-#Other scores: 0.0524806599371 (2nd XGBoost decreasd to 250 rounds + rf - 100 estimators)
-#Other scores: 0.053413687092 (dropped bad columns)
-#Other scores: 0.0534753444281 (added mean normalization)
-#Other scores:  0.0539496646946
-#Other scores:  0.0532557722982 (K-fold validation added with 500 rounds)
-#0.0671924136962 (4 models, Elastic Net with alpha of 0.57)
 
 ################################################ Load Data #############################################################
 
@@ -50,53 +40,17 @@ train_df = add_date_features(train_df)
 train_df = train_df.merge(properties, how='left', on='parcelid')
 test_df = test_df.merge(properties, how='left', on='parcelid')
 
-missing_perc_thresh = 0.98
-exclude_missing = []
-num_rows = train_df.shape[0]
-for c in train_df.columns:
-    num_missing = train_df[c].isnull().sum()
-    if num_missing == 0:
-        continue
-    missing_frac = num_missing / float(num_rows)
-    if missing_frac > missing_perc_thresh:
-        exclude_missing.append(c)
-print("We exclude: %s" % exclude_missing)
-print(len(exclude_missing))
+#identify columns with many missing values
+exclude_missing = missingValueColumns(train_df)
 
-# exclude where we only have one unique value :D
-exclude_unique = []
-for c in train_df.columns:
-    num_uniques = len(train_df[c].unique())
-    if train_df[c].isnull().sum() != 0:
-        num_uniques -= 1
-    if num_uniques == 1:
-        exclude_unique.append(c)
-print("We exclude: %s" % exclude_unique)
-print(len(exclude_unique))
+# exclude where we only have one unique value
+exclude_unique = nonUniqueColumns(train_df)
 
-exclude_other = ['parcelid', 'logerror']  # for indexing/training only
-# do not know what this is LARS, 'SHCG' 'COR2YY' 'LNR2RPD-R3' ?!?
-exclude_other.append('propertyzoningdesc')
-train_features = []
-for c in train_df.columns:
-    if c not in exclude_missing \
-       and c not in exclude_other and c not in exclude_unique:
-        train_features.append(c)
-print("We use these for training: %s" % train_features)
-print(len(train_features))
+# identify training features
+train_features = trainingColumns(train_df, exclude_missing, exclude_unique)
 
-cat_feature_inds = []
-cat_unique_thresh = 1000
-for i, c in enumerate(train_features):
-    num_uniques = len(train_df[c].unique())
-    if num_uniques < cat_unique_thresh \
-            and not 'sqft' in c \
-            and not 'cnt' in c \
-            and not 'nbr' in c \
-            and not 'number' in c:
-        cat_feature_inds.append(i)
-
-print("Cat features are: %s" % [train_features[ind] for ind in cat_feature_inds])
+#identify categorical columns
+cat_feature_inds = categoricalColumns(train_df, train_features)
 
 # some out of range int is a good choice
 train_df.fillna(-1, inplace=True)
@@ -131,83 +85,6 @@ print(X_test.shape)
 
 print('Training ...')
 
-y_mean = y_train.mean()
-#XGBoost params
-xgb_params = {
-    'eta': 0.035,
-    'max_depth': 6,
-    'subsample': 0.80,
-    'objective': 'reg:linear',
-    'colsample_bytree': 0.9,
-    'reg_lambda': 0.8,
-    'reg_alpha': 0.4,
-    'base_score': y_mean,
-    'eval_metric': 'mae',
-    'n_jobs': 4,
-    #'seed': 143,
-    'silent': 1
-}
-
-#Lightgbm params
-params_1 = {}
-params_1['max_bin'] = 10
-params_1['learning_rate'] = 0.0021 # shrinkage_rate
-params_1['boosting_type'] = 'gbdt'
-params_1['objective'] = 'regression'
-params_1['metric'] = 'mae'          # or 'mae'
-params_1['sub_feature'] = 0.345
-params_1['bagging_fraction'] = 0.85 # sub_row
-params_1['bagging_freq'] = 40
-params_1['bagging_seed'] = 1
-params_1['num_leaves'] = 512        # num_leaf
-#params_1['min_data'] = 500         # min_data_in_leaf
-params_1['min_hessian'] = 0.05     # min_sum_hessian_in_leaf
-params_1['verbose'] = 0
-#params_1['feature_fraction_seed'] = 2
-#params_1['bagging_seed'] = 3
-
-#CatBoost params
-catboost_params = {
-    'iterations': 200,
-    'learning_rate': 0.03,
-    'depth': 6,
-    'l2_leaf_reg': 3,
-    'loss_function': 'MAE',
-    'eval_metric': 'MAE'
-}
-
-# rf params
-rf_params = {
-    'n_estimators': 100,
-    'max_depth': 8,
-    'min_samples_split': 100,
-    'min_samples_leaf': 30
-}
-
-#Extra Trees params
-et_params = {
-    'n_jobs': -1,
-    'n_estimators': 500,
-    'max_depth': 8,
-    'min_samples_leaf': 2,
-    'verbose': 0
-}
-
-# AdaBoost parameters
-ada_params = {
-    'n_estimators': 400,
-    'learning_rate' : 0.75
-}
-
-#Second Layer XGBoost parameters
-xgb_params_2 = {'learning_rate': 0.041320682119474678, 'subsample': 0.7544297265725215,
-                'reg_lambda': 3.7966350899885803, 'max_depth': 2, 'reg_alpha': 0.13659517451090278, 'n_estimators': 186,
-                'objective': 'reg:linear', 'eval_metric': 'mae', 'silent': 1}
-
-elastic_net_params = {
-    'alpha': 0.57541585223123481
-}
-
 #Initialize all of the baseline models
 xgboost_1 = XGBoost(xgb_params, 500)
 lgb_model_1 = LGBM(params_1)
@@ -222,9 +99,6 @@ ensemble_model = Ensembler(base_models, XGBRegressor(**xgb_params_2))
 first_layer_results = ensemble_model.train(x_train, y_train)
 #create heatmap
 ensemble_model.heatmap(first_layer_results)
-
-#0.0526758692713
-
 
 ############################################# Evaluate on validation set ###############################################
 

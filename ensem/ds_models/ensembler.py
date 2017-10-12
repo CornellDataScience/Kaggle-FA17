@@ -3,9 +3,9 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import KFold
 from models import LinearRegression, XGBoost
 #import plotting packages
-import plotly.offline as py
-py.init_notebook_mode(connected=True)
-import plotly.graph_objs as go
+#import plotly.offline as py
+#py.init_notebook_mode(connected=True)
+#import plotly.graph_objs as go
 import numpy as np
 import pandas as pd
 import xgboost as xgb
