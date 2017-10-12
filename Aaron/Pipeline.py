@@ -11,6 +11,9 @@ from os import listdir, makedirs, getcwd, remove
 from os.path import isfile, join, abspath, exists, isdir, expanduser
 from shutil import copy2
 
+import datetime
+import re
+
 #Using TensorFlow 
 import keras
 
@@ -108,8 +111,7 @@ sub.head(5)
 
 # Write to file
 print("\n Printing to Disk")
-from datetime import datetime
 
-filename = "Prediction_DogClassif" + str(datetime.datetime.now()) + '.csv'
+filename = "Prediction_Dog_Classif_" + re.sub("[^0-9]", "",str(datetime.datetime.now())) + '.csv'
 print(filename)
 sub.to_csv(filename,index=False)
