@@ -12,7 +12,6 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
-import densenet as dn
 import resnet as rn
 
 # used for logging to TensorBoard
@@ -57,25 +56,27 @@ parser.set_defaults(augment=True)
 
 best_prec1 = 0
 
+
 def main():
     global args, best_prec1
     args = parser.parse_args()
-    if args.tensorboard: configure("runs/%s"%(args.name))
-    
+    if args.tensorboard:
+        configure("runs/%s" % (args.name))
+
     # Data loading code
-    normalize = transforms.Normalize(mean=[x/255.0 for x in [125.3, 123.0, 113.9]],
-                                     std=[x/255.0 for x in [63.0, 62.1, 66.7]])
-    
+    normalize = transforms.Normalize(mean=[x / 255.0 for x in [125.3, 123.0, 113.9]],
+                                     std=[x / 255.0 for x in [63.0, 62.1, 66.7]])
+
     # create model
     # model = dn.DenseNet3(args.layers, 120, args.growth, reduction=args.reduce,
     #                     bottleneck=args.bottleneck, dropRate=args.droprate)
-    model = rn.ResNetTransfer(args.depth, 120, dropRate=args.droprate)
+    model = rn.ResNetTransfer(120, dropRate=args.droprate)
 
     # get the number of model parameters
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
-    
-    # for training on multiple GPUs. 
+
+    # for training on multiple GPUs.
     # Use CUDA_VISIBLE_DEVICES=0,1 to specify which GPUs to use
     # model = torch.nn.DataParallel(model).cuda()
     model = model.cuda()
@@ -105,10 +106,10 @@ def main():
         adjust_learning_rate(optimizer, epoch)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch)
+        train(train_loader(224), model, criterion, optimizer, epoch)
 
         # evaluate on validation set
-        prec1 = validate(val_loader, model, criterion, epoch)
+        prec1 = validate(val_loader(224), model, criterion, epoch)
 
         # remember best prec@1 and save checkpoint
         is_best = prec1 > best_prec1
@@ -119,6 +120,7 @@ def main():
             'best_prec1': best_prec1,
         }, is_best)
     print('Best accuracy: ', best_prec1)
+
 
 def train(train_loader, model, criterion, optimizer, epoch):
     """Train for one epoch on the training set"""
@@ -167,6 +169,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         log_value('train_loss', losses.avg, epoch)
         log_value('train_acc', top1.avg, epoch)
 
+
 def validate(val_loader, model, criterion, epoch):
     """Perform validation on the validation set"""
     batch_time = AverageMeter()
@@ -214,16 +217,19 @@ def validate(val_loader, model, criterion, epoch):
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     """Saves checkpoint to disk"""
-    directory = "runs/%s/"%(args.name)
+    directory = "runs/%s/" % (args.name)
     if not os.path.exists(directory):
         os.makedirs(directory)
     filename = directory + filename
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, 'runs/%s/'%(args.name) + 'model_best.pth.tar')
+        shutil.copyfile(filename, 'runs/%s/' %
+                        (args.name) + 'model_best.pth.tar')
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.reset()
 
@@ -249,6 +255,7 @@ def adjust_learning_rate(optimizer, epoch):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
+
 def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
     maxk = max(topk)
@@ -263,6 +270,7 @@ def accuracy(output, target, topk=(1,)):
         correct_k = correct[:k].view(-1).float().sum(0)
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
+
 
 if __name__ == '__main__':
     main()
