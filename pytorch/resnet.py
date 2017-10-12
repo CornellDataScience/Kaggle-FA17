@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torchvision
 
 class ResNetTransfer(nn.Module):
-    def __init__(self, depth, num_classes, dropRate=0.0):
+    def __init__(self, num_classes, dropRate=0.0):
         super(ResNetTransfer, self).__init__()
 
         self.resnet = torchvision.models.resnet18(pretrained=True)

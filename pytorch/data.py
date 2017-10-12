@@ -11,7 +11,8 @@ from sklearn.preprocessing import LabelEncoder
 
 le = LabelEncoder()
 
-croppedSize = 48
+CROPPED_SIZE = 48
+
 
 class DogsDataset(Dataset):
 
@@ -35,7 +36,7 @@ class DogsDataset(Dataset):
         img = Image.open(self.img_path + self.X_train[index] + self.img_ext)
         img = img.convert('RGB')
         if self.transform is not None:
-            img = self.transform(img)       
+            img = self.transform(img)
 
         label = self.y_train[index]
         return img, label
@@ -68,35 +69,40 @@ class DogsDatasetTest(Dataset):
         return img, label
 
 
-data_transform = transforms.Compose([
-    transforms.RandomSizedCrop(croppedSize),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.392, 0.452, 0.476],
-                         std=[0.262, 0.257, 0.263])
-])
+def dogsDataset(size=CROPPED_SIZE):
+    transform = transforms.Compose([
+        transforms.RandomSizedCrop(size),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.392, 0.452, 0.476],
+                             std=[0.262, 0.257, 0.263])
+    ])
+    return DogsDataset(csv_file="../labels.csv", root_dir="../train/",
+                       transform=transform)
 
-transform_test = transforms.Compose([
-    transforms.Scale(croppedSize),
-    transforms.CenterCrop(croppedSize),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.392, 0.452, 0.476],
-                         std=[0.262, 0.257, 0.263])
-])
 
-dogsDataset = DogsDataset(csv_file="labels.csv", root_dir="train/",
-                          transform=data_transform)
+def dogsDatasetTest(size=CROPPED_SIZE):
+    transform = transforms.Compose([
+        transforms.Scale(size),
+        transforms.CenterCrop(size),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.392, 0.452, 0.476],
+                             std=[0.262, 0.257, 0.263])
+    ])
+    return DogsDatasetTest(csv_file="../labels.csv", root_dir="../train/",
+                           transform=transform)
 
-dogsDatasetTest = DogsDatasetTest(csv_file="labels.csv", root_dir="train/",
-                          transform=data_transform)
 
-train_loader = torch.utils.data.DataLoader(dogsDataset,
-                                             batch_size=64, shuffle=True,
-                                             num_workers=4)
+def train_loader(size=CROPPED_SIZE):
+    return torch.utils.data.DataLoader(dogsDataset(size),
+                                       batch_size=64, shuffle=True,
+                                       num_workers=4)
 
-val_loader = torch.utils.data.DataLoader(
-    dogsDatasetTest,
-    batch_size=64, shuffle=True, num_workers=4)
+
+def val_loader(size=CROPPED_SIZE):
+    return torch.utils.data.DataLoader(
+        dogsDatasetTest(size),
+        batch_size=64, shuffle=True, num_workers=4)
 
 
 class DogsOutputDataset(Dataset):
@@ -119,20 +125,21 @@ class DogsOutputDataset(Dataset):
 
         return img, self.img_list[index][:-4]
 
+
 data_transform2 = transforms.Compose([
-    transforms.Scale(croppedSize),
-    transforms.CenterCrop(croppedSize),
+    transforms.Scale(CROPPED_SIZE),
+    transforms.CenterCrop(CROPPED_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.392, 0.452, 0.476],
                          std=[0.262, 0.257, 0.263])
 ])
 
-output_dataset = DogsOutputDataset(root_dir="test/",
-                          transform=data_transform2)
+output_dataset = DogsOutputDataset(root_dir="../test/",
+                                   transform=data_transform2)
 
 if __name__ == "__main__":
     # idx = [x[1] for x in output_dataset]
-    a = dogsDataset[0]
+    a = dogsDataset()[0]
 
     print(a)
 
