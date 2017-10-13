@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 import densenet as dn
+import resnet as rn
 
 # used for logging to TensorBoard
 from tensorboard_logger import configure, log_value
@@ -35,6 +36,8 @@ parser.add_argument('--reduce', default=0.5, type=float,
                     help='compression rate in transition stage (default: 0.5)')
 parser.add_argument('--no-bottleneck', dest='bottleneck', action='store_false',
                     help='To not use bottleneck block')
+parser.add_argument('--type', default='dn3', type=str,
+                    help='type of network')
 
 best_prec1 = 0
 
@@ -44,9 +47,14 @@ def main():
 
     # create model
     
+    if args.type == "dn3":
+        model = dn.DenseNet3(args.layers, 120, args.growth, reduction=args.reduce,
+                             bottleneck=args.bottleneck, dropRate=args.droprate)
+    elif args.type == "resnet":
+        model = rn.ResNetTransfer(args.depth, 120, dropRate=args.droprate)
 
-    model = dn.DenseNet3(args.layers, 120, args.growth, reduction=args.reduce,
-                         bottleneck=args.bottleneck)
+    else: raise Exception('No such model exists - choose dn3 or resnet')
+
     # get the number of model parameters
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
