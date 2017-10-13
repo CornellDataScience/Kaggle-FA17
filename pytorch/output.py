@@ -51,7 +51,7 @@ def main():
         model = dn.DenseNet3(args.layers, 120, args.growth, reduction=args.reduce,
                              bottleneck=args.bottleneck, dropRate=args.droprate)
     elif args.type == "resnet":
-        model = rn.ResNetTransfer(args.depth, 120, dropRate=args.droprate)
+        model = rn.ResNetTransfer(120, dropRate=args.droprate)
 
     else: raise Exception('No such model exists - choose dn3 or resnet')
 
