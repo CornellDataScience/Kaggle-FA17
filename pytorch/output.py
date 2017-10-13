@@ -74,7 +74,7 @@ def main():
         
     model.eval()
 
-    out = pd.read_csv('sample_submission.csv')
+    out = pd.read_csv('../sample_submission.csv')
 
     out = out.set_index("id")
 
