@@ -21,13 +21,13 @@ from tensorboard_logger import configure, log_value
 from data import train_loader, val_loader
 
 parser = argparse.ArgumentParser(description='PyTorch DenseNet Training')
-parser.add_argument('--epochs', default=180, type=int,
+parser.add_argument('--epochs', default=50, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=64, type=int,
                     help='mini-batch size (default: 64)')
-parser.add_argument('--lr', '--learning-rate', default=0.5, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.005, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
@@ -74,9 +74,10 @@ def main():
         model = dn.DenseNet3(args.layers, 120, args.growth, reduction=args.reduce,
                              bottleneck=args.bottleneck, dropRate=args.droprate)
     elif args.type == "resnet":
-        model = rn.ResNetTransfer(args.depth, 120, dropRate=args.droprate)
+        model = rn.ResNetTransfer(120, dropRate=args.droprate)
 
-    else: raise Exception('No such model exists - choose dn3 or resnet')
+    else:
+        raise Exception('No such model exists - choose dn3 or resnet')
 
     # get the number of model parameters
 
@@ -105,18 +106,23 @@ def main():
 
     # define loss function (criterion) and pptimizer
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                                momentum=args.momentum,
-                                weight_decay=args.weight_decay)
+    if args.type == "dn3":
+        optimizer = torch.optim.SGD(model.parameters(), args.lr,
+                                    momentum=args.momentum,
+                                    weight_decay=args.weight_decay)
+    else:
+        optimizer = torch.optim.SGD(model.resnet.fc.parameters(), args.lr,
+                                    momentum=args.momentum,
+                                    weight_decay=args.weight_decay)
 
     for epoch in range(args.start_epoch, args.epochs):
         adjust_learning_rate(optimizer, epoch)
 
         # train for one epoch
-        train(train_loader(96), model, criterion, optimizer, epoch)
+        train(train_loader(224), model, criterion, optimizer, epoch)
 
         # evaluate on validation set
-        prec1 = validate(val_loader(96), model, criterion, epoch)
+        prec1 = validate(val_loader(224), model, criterion, epoch)
 
         # remember best prec@1 and save checkpoint
         is_best = prec1 > best_prec1
@@ -255,7 +261,7 @@ class AverageMeter(object):
 
 def adjust_learning_rate(optimizer, epoch):
     """Sets the learning rate to the initial LR decayed by 10 after 150 and 225 epochs"""
-    lr = args.lr * (0.2 ** (epoch // 80)) * (0.2 ** (epoch // 140))
+    lr = args.lr * (0.2 ** (epoch // 20)) * (0.2 ** (epoch // 40))
     # log to TensorBoard
     if args.tensorboard:
         log_value('learning_rate', lr, epoch)

@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 
 le = LabelEncoder()
 
-CROPPED_SIZE = 48
+CROPPED_SIZE = 320 #224
 
 
 class DogsDataset(Dataset):

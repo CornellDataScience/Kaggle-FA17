@@ -76,6 +76,9 @@ def main():
 
     out = pd.read_csv('../sample_submission.csv')
 
+    print("hi")
+    print(out.head())
+
     out = out.set_index("id")
 
     for input, img in output_dataset:

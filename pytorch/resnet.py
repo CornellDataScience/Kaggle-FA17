@@ -9,7 +9,8 @@ class ResNetTransfer(nn.Module):
         super(ResNetTransfer, self).__init__()
 
         self.resnet = torchvision.models.resnet18(pretrained=True)
-
+        for param in self.resnet.parameters():
+            param.requires_grad = False
         num_ftrs = self.resnet.fc.in_features
         self.resnet.fc = nn.Linear(num_ftrs, num_classes)
 
