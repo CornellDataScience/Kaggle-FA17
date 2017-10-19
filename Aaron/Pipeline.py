@@ -25,21 +25,21 @@ from keras.layers import Dense, Dropout, Flatten
 #Read in Keras Data Set
 #Read data from https://www.kaggle.com/gaborfodor/keras-pretrained-models
 #(need to use data set in the kernel)
-print("\nReading in Keras Training Data...")
-print(listdir("../input/keras-pretrained-models/"))
-cache_dir = expanduser(join('~', '.keras'))
-if not exists(cache_dir):
-    makedirs(cache_dir)
-models_dir = join(cache_dir, 'models')
-if not exists(models_dir):
-    makedirs(models_dir)
-copy2("../input/keras-pretrained-models/vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5", models_dir)
-print(listdir(models_dir))
+#print("\nReading in Keras Training Data...")
+#print(listdir("../input/keras-pretrained-models/"))
+#cache_dir = expanduser(join('~', '.keras'))
+#if not exists(cache_dir):
+#    makedirs(cache_dir)
+#models_dir = join(cache_dir, 'models')
+#if not exists(models_dir):
+#    makedirs(models_dir)
+#copy2("../input/keras-pretrained-models/vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5", models_dir)
+#print(listdir(models_dir))
 
 #Reading
 print("\nReading Files")
-df_train = pd.read_csv('../input/dog-breed-identification/labels.csv')
-df_test = pd.read_csv('../input/dog-breed-identification/sample_submission.csv')
+df_train = pd.read_csv('../labels.csv')
+df_test = pd.read_csv('../sample_submission.csv')
 
 #Format data into sample submission format
 print("\nFormatting Data and Submission Type")
@@ -51,23 +51,23 @@ one_hot_labels = np.asarray(one_hot)
 
 #Set the Image Rescale size
 print("\nBuilding Training Test...")
-im_size = 90
+im_size = 300
 
 #Build the training arrays
 x_train = []
 y_train = []
 x_test = []
 
-i= 0 
-for f, breed in df_train.values:
-    img = cv2.imread("../input/dog-breed-identification/train/{}.jpg".format(f))
+i = 0 
+for f, breed in tqdm(df_train.values):
+    img = cv2.imread('../train/{}.jpg'.format(f))
     label = one_hot_labels[i]
     x_train.append(cv2.resize(img, (im_size, im_size)))
     y_train.append(label)
     i += 1
     
-for f in df_test['id'].values:
-    img = cv2.imread("../input/dog-breed-identification/test/{}.jpg".format(f))
+for f in tqdm(df_test['id'].values):
+    img = cv2.imread('../test/{}.jpg'.format(f))
     x_test.append(cv2.resize(img, (im_size, im_size)))
     
 y_train_raw = np.array(y_train, np.uint8)
@@ -96,7 +96,7 @@ model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accur
 #callbacks_list = [keras.callbacks.EarlyStopping(monitor='val_acc', patience=3, verbose=1)]
 model.summary()
 
-model.fit(X_train, Y_train, epochs=1, validation_data=(X_valid, Y_valid), verbose=1)
+model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid), verbose=1)
 
 print("\nPredicting")
 preds = model.predict(x_test, verbose=1)
