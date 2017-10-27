@@ -14,6 +14,7 @@ df_members = pd.read_csv('./members.csv')
 df_members = df_members.drop_duplicates(subset=['msno'], keep='first')
 df_transactions = pd.read_csv('./transactions.csv')
 df_transactions = df_transactions.drop_duplicates(subset=['msno'], keep='first')
+df_transactions = df_transactions.sort_values(by=['transaction_date'], ascending=[False]).reset_index(drop=True)
 def change_datatype(df):
     int_cols = list(df.select_dtypes(include=['int']).columns)
     for col in int_cols:
@@ -38,8 +39,8 @@ def change_datatype_float(df):
 
 
 #Feature Engineering for Transactions
-#df_transactions['discount'] = df_transactions['plan_list_price'] - df_transactions['actual_amount_paid']
-#df_transactions['is_discount'] = df_transactions.discount.apply(lambda x: 1 if x > 0 else 0)
+df_transactions['discount'] = df_transactions['plan_list_price'] - df_transactions['actual_amount_paid']
+df_transactions['is_discount'] = df_transactions.discount.apply(lambda x: 1 if x > 0 else 0)
 #df_transactions['amt_per_day'] = df_transactions['actual_amount_paid'] / df_transactions['payment_plan_days']
 
 date_cols = ['transaction_date', 'membership_expire_date']
@@ -70,10 +71,10 @@ df_comb = pd.merge(df_transactions, df_members, on='msno', how='inner')
 del df_transactions
 del df_members
 
-#df_comb['reg_mem_duration'] = df_comb['registration_duration'] - df_comb['membership_duration']
+df_comb['reg_mem_duration'] = df_comb['registration_duration'] - df_comb['membership_duration']
 #df_comb['autorenew_&_not_cancel'] = ((df_comb.is_auto_renew == 1) == (df_comb.is_cancel == 0)).astype(np.int8)
 # df_comb['notAutorenew_&_cancel'] = ((df_comb.is_auto_renew == 0) == (df_comb.is_cancel == 1)).astype(np.int8)
-#df_comb['long_time_user'] = (((df_comb['registration_duration'] / 365).astype(int)) > 1).astype(int)
+df_comb['long_time_user'] = (((df_comb['registration_duration'] / 365).astype(int)) > 1).astype(int)
 
 train = pd.merge(train, df_comb, how='left', on='msno')
 test = pd.merge(test, df_comb, how='left', on='msno')
@@ -129,7 +130,7 @@ def xgb_score(preds, dtrain):
 fold = 1
 for i in range(fold):
     params = {
-        'eta': 0.02, #use 0.002
+        'eta': 0.002, #use 0.002
         'max_depth': 7,
         'objective': 'binary:logistic',
         'eval_metric': 'logloss',
@@ -138,7 +139,7 @@ for i in range(fold):
     }
     x1, x2, y1, y2 = model_selection.train_test_split(train[cols], train['is_churn'], test_size=0.3, random_state=i)
     watchlist = [(xgb.DMatrix(x1, y1), 'train'), (xgb.DMatrix(x2, y2), 'valid')]
-    model = xgb.train(params, xgb.DMatrix(x1, y1), 150,  watchlist, feval=xgb_score, maximize=False, verbose_eval=50, early_stopping_rounds=50) #use 1500
+    model = xgb.train(params, xgb.DMatrix(x1, y1), 1600,  watchlist, feval=xgb_score, maximize=False, verbose_eval=1, early_stopping_rounds=1500) #use 1500
     if i != 0:
         pred += model.predict(xgb.DMatrix(test[cols]), ntree_limit=model.best_ntree_limit)
     else:
