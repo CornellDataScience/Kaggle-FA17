@@ -1,5 +1,12 @@
+.ipynb_checkpoints/
+.vscode/
+.DS_Store
 runs/
 test/
+data/
 train/
 *.zip
+*.7z
+*.csv
+*.tsv
 __pycache__/
