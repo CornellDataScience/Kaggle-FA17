@@ -1,0 +1,5 @@
+runs/
+test/
+train/
+*.zip
+__pycache__/
