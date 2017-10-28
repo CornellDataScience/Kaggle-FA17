@@ -22,7 +22,6 @@ def generateNewImages(x_train, y_train):
     
     #additional_angles = np.empty([1000])
     
-    
     batches = 0
     per_batch = 1000
     for x_batch, y_batch in datagen.flow(fudge_X_train, y_train, batch_size=per_batch, shuffle=False, seed=137):
@@ -47,4 +46,3 @@ def saveGeneratedImages(x_train, y_train):
     x_train_reshaped = np.reshape(x_train, (2203, 11250))
     np.savetxt("x_train_new.csv", x_train_reshaped, delimiter=",")
     np.savetxt("y_train_new.csv", y_train, delimiter=",")
-    
