@@ -5,6 +5,8 @@ runs/
 test/
 data/
 train/
+*.gz
+*.pkl
 *.zip
 *.7z
 *.csv

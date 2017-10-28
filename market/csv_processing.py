@@ -11,8 +11,8 @@ import gc
 
 #train = pd.read_csv('./input/train.csv')
 # transactions = pd.read_csv('./input/transactions.csv')
-items = pd.read_csv('./input/items.csv')
-items.to_pickle("randomtest.pkl")
+# items = pd.read_csv('./items.csv')
+# items.to_pickle("randomtest.pkl")
 # holidays = pd.read_csv('./input/holidays_events.csv')
 # stores = pd.read_csv('./input/stores.csv')
 # oil = pd.read_csv('./input/oil.csv')
@@ -64,7 +64,7 @@ dtype_dict={"id":np.uint32,
             "unit_sales":np.float32
            }
 
-train_part2=pd.read_csv("./input/train.csv",dtype=dtype_dict,usecols=[1,5],parse_dates=[0])
+train_part2=pd.read_csv("./train.csv",dtype=dtype_dict,usecols=[1,5],parse_dates=[0])
 train_part2['Year'] = pd.DatetimeIndex(train_part2['date']).year
 train_part2['Month'] = pd.DatetimeIndex(train_part2['date']).month
 train_part2['Day'] =pd.DatetimeIndex(train_part2['date']).day.astype(np.uint8)
@@ -81,7 +81,7 @@ print(train_part2.dtypes)
 
 
 
-train_part1 = pd.read_csv("./input/train.csv",dtype=dtype_dict,usecols=[0,2,3,4])
+train_part1 = pd.read_csv("./train.csv",dtype=dtype_dict,usecols=[0,2,3,4])
 print(train_part1.dtypes)
 
 # joining part one and two
