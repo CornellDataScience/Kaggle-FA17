@@ -51,7 +51,7 @@ one_hot_labels = np.asarray(one_hot)
 
 #Set the Image Rescale size
 print("\nBuilding Training Test...")
-im_size = 300
+im_size = 90
 
 #Build the training arrays
 x_train = []
