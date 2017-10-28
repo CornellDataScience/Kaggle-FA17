@@ -1,0 +1,22 @@
+https://www.kaggle.com/victorgrobberio/visualizing-smelling-and-feeling-business-data
+Note that the sales obey a very seasonal pattern with spikes at periodic times of the year (December 23)
+as well as on Saturdays and Sundays. Thursdays offer almost no sales
+
+Given a date, store number, and item number, predict the sales.
+Let's take the mean of the item numbers. But let's also find the total sale count
+per day of all items.
+
+M 6 /
+T 7
+W 7
+Th 1
+F 6
+Sa 12
+Su 15
+
+And divide by the total number of sales so that we can the percentage of daily sales
+We'd expect 100/7 ~ 14.25 percent per day with let's say a SD of 3 in each direction
+
+take current value * (actual percent / 14.25 percent)
+
+We'll find sales information in
