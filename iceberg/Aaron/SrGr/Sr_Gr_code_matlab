@@ -1,0 +1,118 @@
+% This Matlab code is used for conversion of slant Range Image to Ground
+% range Image in which the number of pixels along range direction reduce due
+% to increase in the range resolution. Input file to this program is SLC image.
+% For conversion SLC image is multilooked along azimuth direction.
+clear all;
+close all;
+clc;
+% Data format
+nValid= 4912;  % valid range samples
+validAzPts=1122; % valid azimuth points
+
+startTime = clock; % get start time to monitor performance
+new_size= 20; % Required Range resolution  
+mult_lk=20;   % Azimuth multilooking factor
+line_space=3.980; % Line Pixel Spacing 
+pixel_space = 7.904; % Range Pixel Spcaing 
+ro = 8.2872e+05/1000;% Slant Range to first pixel obatained from the Leader file 
+re= 6378144/1000;    % Radius of Eartch
+ht = 7.1569e+006/1000; % sqrt(x^2 + y^2+ z^2)=sqrt(4.4600e+006^2+  1.0937e+005^2+ 5.5963e+006^2)  -  Height of the Sensor from the terrain
+numLines=1122;  % Total Number of Azimuth Lines per patch
+numPatch=56;    % Number of Lines in One Patch
+nValid=4912;    % Number of Range samples in one Azimuth Line
+
+az_lookup=zeros(1,numLines); % Initializing Azimuth Lookup Table
+
+% calculating azimuth look up table
+r_index=1;
+az_lookup(1)=0;
+c=az_lookup(r_index);
+    while c < numLines
+        az_lookup(r_index)=new_size*(r_index)/(line_space*mult_lk);
+            c= az_lookup(r_index);
+			r_index=r_index+1;	
+    end
+    
+ rg=re * acos((ht*ht+re*re-ro*ro)/(2*ht*re));
+ gr_lookup=zeros(1,nValid);
+ c_index=1;	 
+ gr_lookup(1)=0; 
+  
+% calculating ground range look up table*/
+h=gr_lookup(c_index);
+while  h < nValid
+
+    rp=sqrt(ht*ht+re*re-2.0*ht*re*cos(rg/re));
+	gr_lookup(c_index)=(rp-ro)*1000/pixel_space;
+	rg=rg+ new_size/1000;
+    h=gr_lookup(c_index);
+    c_index=c_index+1;
+end	
+
+
+	for i=1:r_index-1
+		lwr_int_az(i)= floor(az_lookup(i));
+		upr_int_az(i)=lwr_int_az(i)+1;
+		lwr_frct_az(i)= az_lookup(i)-lwr_int_az(i);
+		upr_frct_az(i)=1 -lwr_frct_az(i);
+    end
+
+	for i=1:c_index-1
+		lwr_int_gr(i)= floor(gr_lookup(i));
+		upr_int_gr(i)=lwr_int_gr(i)+1;
+		lwr_frct_gr(i)=gr_lookup(i)-lwr_int_gr(i);
+		upr_frct_gr(i)=1-lwr_frct_gr(i);
+    end 
+
+
+fid1=fopen('sr2gr.dat','w');    % Output file having ground range image
+    for i=1:r_index-5           % azimuth loop
+	  fid=fopen('..\module_7\multilooked_azi.dat','r');    % Multilooked Image as input
+      multi=lwr_int_az(i);
+       for k=1:multi
+           over=fread(fid,[1228*4,1],'float')';
+        end
+       op1=fread(fid,[1228*4,1],'float')';
+       op2=fread(fid,[1228*4,1],'float')';
+       fclose(fid);
+    
+    % range line processing
+		for j=3:c_index-2
+	
+			a00 = op1(lwr_int_gr(j));
+			a01 = op1(upr_int_gr(j));
+			a10 = op2(lwr_int_gr(j));
+			a11 = op2(upr_int_gr(j));
+			
+			ll_dis=lwr_frct_gr(j)*lwr_frct_gr(j)+lwr_frct_az(i)*lwr_frct_az(i);
+			lr_dis=upr_frct_gr(j)*upr_frct_gr(j)+lwr_frct_az(i)*lwr_frct_az(i);
+			ul_dis=lwr_frct_gr(j)*lwr_frct_gr(j)+upr_frct_az(i)*upr_frct_az(i);
+			ur_dis=upr_frct_gr(j)*upr_frct_gr(j)+upr_frct_az(i)*upr_frct_az(i);
+
+			
+			numer=a00/ll_dis+a01/lr_dis+a10/ul_dis+a11/ur_dis;
+			denum=1/ll_dis+1/lr_dis+1/ul_dis+1/ur_dis;
+			op_op2(j)=numer/denum;
+			    
+        end
+      fwrite(fid1,op_op2','float');   % Data Writing
+ end
+fclose(fid1);
+disp(sprintf('Finished slant range to ground range conversion in  %d seconds',floor(etime(clock,startTime))));
+
+fid=fopen('sr2gr.dat','r');
+%op_buf=fread(fid,[4671,4884],'float')';
+op_buf=fread(fid,[4671,4000],'float')';
+numLooks=4;
+indices = [1:numLooks:numLooks*floor(size(op_buf,1)/numLooks)];
+looked1 = op_buf(indices,:);
+looked2 = looked1(:,1:4:4668) + looked1(:,2:4:4669)+looked1(:,3:4:4670) + looked1(:,4:4:4671);  % Range Looking =4 ;  % Range Looking =4 
+
+disp('Displaying ground range image')
+figure  
+imagesc(log(looked2)); % the logarithm scales the brightnesses 
+axis image
+colormap('gray') 
+title('Ground Range Image')
+xlabel('Range bin');
+ylabel('Azimuth bin');
