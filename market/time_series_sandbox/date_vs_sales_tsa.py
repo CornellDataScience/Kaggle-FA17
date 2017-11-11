@@ -11,7 +11,6 @@ df_train = pd.read_csv(
 )
 print(df_train.head())
 print(df_train.tail())
-sys.exit()
 #skiprows=range(1, 124035460)
 #print(df_train.store_nbr.unique()) # 54 Different stores
 df_train['unit_sales'] =  df_train['unit_sales'].apply(pd.np.log1p)
@@ -20,12 +19,6 @@ u_dates = df_train.date.unique()
 # u_stores = df_train.store_nbr.unique()
 # u_items = df_train.item_nbr.unique()
 df_train.set_index(["date"], inplace=True)
-df_train = df_train.reindex(
-    pd.MultiIndex.from_product(
-        (u_dates),
-        names=["date"]
-    )
-)
 
 df_train.loc[:, "unit_sales"].fillna(0, inplace=True)
 # Assume missing entries imply no promotion
