@@ -89,9 +89,9 @@ def lee_enhanced_filter(img, win_size=3, k=K_DEFAULT, cu=CU_DEFAULT,
     img = np.float64(img)
     img_filtered = np.zeros_like(img)
     N, M = img.shape
-    win_offset = win_size / 2
+    win_offset = win_size // 2
 
-    for i in xrange(0, N):
+    for i in range(0, N):
         xleft = i - win_offset
         xright = i + win_offset
 
@@ -100,7 +100,7 @@ def lee_enhanced_filter(img, win_size=3, k=K_DEFAULT, cu=CU_DEFAULT,
         if xright >= N:
             xright = N
 
-        for j in xrange(0, M):
+        for j in range(0, M):
             yup = j - win_offset
             ydown = j + win_offset
 
@@ -109,7 +109,7 @@ def lee_enhanced_filter(img, win_size=3, k=K_DEFAULT, cu=CU_DEFAULT,
             if ydown >= M:
                 ydown = M
 
-            assert_indices_in_range(N, M, xleft, xright, yup, ydown)
+            #assert_indices_in_range(N, M, xleft, xright, yup, ydown)
 
             pix_value = img[i, j]
             window = img[xleft:xright, yup:ydown]
@@ -118,10 +118,14 @@ def lee_enhanced_filter(img, win_size=3, k=K_DEFAULT, cu=CU_DEFAULT,
 
             new_pix_value = (window_mean * w_t) + (pix_value * (1.0 - w_t))
 
-            assert new_pix_value >= 0.0, \
-                    "ERROR: lee_enhanced_filter(), pix " \
-                    "filter can't be negative"
+           # assert new_pix_value >= 0.0, \
+           #        "ERROR: lee_enhanced_filter(), pix " \
+           #        "filter can't be negative"
 
             img_filtered[i, j] = round(new_pix_value)
 
     return img_filtered
+#Applies lee filter to all of stuff in data and returns a mutated copy
+#Needs data to be the images
+def lee_enhanced_filter_df(data):
+    return np.array([lee_enhanced_filter(band) for band in data])

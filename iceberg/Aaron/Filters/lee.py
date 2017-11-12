@@ -105,7 +105,4 @@ def lee_filter(img, win_size=3, cu=CU_DEFAULT):
 #Applies lee filter to all of stuff in data and returns a mutated copy
 #Needs data to be the images
 def lee_filter_df(data):
-    datacopy = np.array(data, copy = True)
-    for i in (0, np.size(datacopy, 0)-1):
-        datacopy[i] = lee_filter(datacopy[i])
-    return datacopy
+    return np.array([lee_filter(band) for band in data])
