@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 from keras.utils.np_utils import to_categorical
 from keras.models import Sequential, Model
 from keras.callbacks import EarlyStopping
-from keras.layers import Conv2D, BatchNormalization, Dropout, MaxPooling2D, Dense, Flatten, ZeroPadding2D, Activation
+from keras.layers import Conv2D, BatchNormalization, Dropout, MaxPooling2D, Dense, Flatten, Activation, LeakyReLU
 from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
@@ -39,9 +39,6 @@ x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(tr
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
-#0.003 -- high of 0.9336
-#0.006 -- high of 0.9419 -- average out at ~0.92
-#0.013
 weight_decay = 0.006
 
 image_input = Input(shape=(75, 75, 2), name="image")
@@ -72,20 +69,18 @@ cnn = Dense(100, activation='relu', kernel_regularizer=l2(weight_decay))(cnn)
 
 output = Dense(2, activation='softmax')(cnn)
 
-
 model = Model(inputs=[image_input, angle_input], outputs=output)
-model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['binary_crossentropy'])
 model.summary()
-print("Training")
 early_stopping = EarlyStopping(monitor = 'val_loss', patience = 10)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
           epochs = 35, shuffle = True, callbacks=[early_stopping])
 
-
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
+
 
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions_8.csv', index = False)
+pred_df.to_csv('predictions.csv', index = False)

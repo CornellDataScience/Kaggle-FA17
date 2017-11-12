@@ -35,12 +35,12 @@ def mean_filter(img, win_size=3):
         - win_size: the size of the windows (by default 3).
     """
     assert_window_size(win_size)
-
-    N, M = img.shape
-    win_offset = win_size / 2
+    img = np.float64(img)
     img_filtered = np.zeros_like(img)
+    N, M = img.shape
+    win_offset = win_size // 2
 
-    for i in xrange(0, N):
+    for i in range(0, N):
         xleft = i - win_offset
         xright = i + win_offset
 
@@ -49,7 +49,7 @@ def mean_filter(img, win_size=3):
         if xright >= N:
             xright = N
 
-        for j in xrange(0, M):
+        for j in range(0, M):
             yup = j - win_offset
             ydown = j + win_offset
 
@@ -66,3 +66,9 @@ def mean_filter(img, win_size=3):
             img_filtered[i, j] = round(window_mean)
 
     return img_filtered
+#Applies filter to all stuff in df
+def mean_filter_df(data):
+    datacopy = np.array(data, copy = True)
+    for i in (0, np.size(datacopy, 0)-1):
+        datacopy[i] = mean_filter(datacopy[i])
+    return datacopy

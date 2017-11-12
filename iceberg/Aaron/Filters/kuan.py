@@ -70,9 +70,9 @@ def kuan_filter(img, win_size=3, cu=CU_DEFAULT):
     img_filtered = np.zeros_like(img)
 
     N, M = img.shape
-    win_offset = win_size / 2
+    win_offset = win_size // 2
 
-    for i in xrange(0, N):
+    for i in range(0, N):
         xleft = i - win_offset
         xright = i + win_offset
 
@@ -81,7 +81,7 @@ def kuan_filter(img, win_size=3, cu=CU_DEFAULT):
         if xright >= N:
             xright = N
 
-        for j in xrange(0, M):
+        for j in range(0, M):
             yup = j - win_offset
             ydown = j + win_offset
 
@@ -101,3 +101,7 @@ def kuan_filter(img, win_size=3, cu=CU_DEFAULT):
             img_filtered[i, j] = round(new_pix_value)
 
     return img_filtered
+#Applies kuan filter to all of stuff in data and returns a mutated copy
+#Needs data to be the images
+def kuan_filter_df(data):
+    return np.array([kuan_filter(band) for band in data])
