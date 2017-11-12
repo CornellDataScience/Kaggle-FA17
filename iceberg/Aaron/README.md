@@ -6,88 +6,26 @@ Each sample includes the inclination angle, HH and HV polarized bands, and a val
 Because we hope to build a convolutional neural network to classify the data, the number of training samples severly limits the depth of the models. 
 Furthermore, the given data provides many corrupted data files. For many images, no incidence angle is provided. For others, backscatter renders the image almost unreadable.
 
-My research goals aim at addressing these two problems as we construct deeper neural network models. 
+My research goals aim at addressing these two problems as we construct deeper neural networks. 
 
 ## Data Preprocessing
 
-SAR data 
+The Sentinel-1 Satellites provides competitors with unprocessed SAR data. Due to the inherent properties of polarized data, the HH and HV bands don't provide us with enough information to cancel out most background noise. Furthermore, due to the inherent properties of SAR imaging, "speckles" of radar noise appear as random spikes.
 
-### Prerequisites
+#### Examples
 
-What things you need to install the software and how to install them
+Highly Speckled            | Less speckles            
+:-------------------------:|:-------------------------:
+![](images/Unfiltered_4.png)|![](images/Unfiltered_2.png)
 
-```
-Give examples
-```
+### Filters
 
-### Installing
+Filters provide us a way to remove speckle noise. Most of the filter code is adapted from the [pyradar](http://pyradar-tools.readthedocs.io/en/latest/) package. Example filters are given below
 
-A step by step series of examples that tell you have to get a development env running
+#### Filter Examples
 
-Say what the step will be
+Unfiltered          | Passed through Lee Filter          
+:-------------------------:|:-------------------------:
+![](images/Unfiltered_3.png)|![](images/Lee_Filtered_3.png)
 
-```
-Give the example
-```
 
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
-
-## Authors
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-* Hat tip to anyone who's code was used
-* Inspiration
-* etc
