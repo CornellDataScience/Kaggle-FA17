@@ -3,7 +3,7 @@ nb_filters = 8
 nb_dense = 128
 #train
 batch_size = 64
-epochs = 3
+epochs = 10
 #weights
 weights_init = '../weights.hdf5'
 weights_file = '../weights.hdf5'

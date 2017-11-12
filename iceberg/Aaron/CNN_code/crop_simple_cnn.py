@@ -16,8 +16,8 @@ from keras.layers import average, Input, Concatenate
 
 #Import filter
 import sys
-sys.path.insert(0, '../Aaron/DataAug')
-sys.path.insert(0, '../Kevin')
+sys.path.insert(0, '../../Aaron/DataAug')
+sys.path.insert(0, '../../Kevin')
 
 from extra_functions import *
 import cropping

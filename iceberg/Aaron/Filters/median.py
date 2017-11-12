@@ -67,3 +67,9 @@ def median_filter(img, win_size=3):
             img_filtered[i, j] = round(window_median)
 
     return img_filtered
+
+def med_mult(img):
+    newimg = []
+    for i in range(np.size(img, axis = 2)):
+        newimg.append(median_filter(img[:, :, i]))
+    return np.array(newimg)              

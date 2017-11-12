@@ -29,7 +29,7 @@ def load_and_format(in_path):
 
 
 def add_common_layers(cnn):
-    #cnn = BatchNormalization(momentum=0.99)(cnn)
+    cnn = BatchNormalization()(cnn)
     cnn = Activation('relu')(cnn)
     return cnn
 
@@ -74,14 +74,14 @@ def residual_block(cnn, nb_channels_in, nb_channels_out, _strides=(1, 1), _proje
 
         cnn = Conv2D(nb_channels_out, kernel_size=(1, 1), strides=(1, 1), padding='same')(cnn)
         # batch normalization is employed after aggregating the transformations and before adding to the shortcut
-        #cnn = BatchNormalization(momentum=0.99)(cnn)
+        cnn = BatchNormalization()(cnn)
 
         # identity shortcuts used directly when the input and output are of the same dimensions
         if _project_shortcut or _strides != (1, 1):
             # when the dimensions increase projection shortcut is used to match dimensions (done by 1×1 convolutions)
             # when the shortcuts go across feature maps of two sizes, they are performed with a stride of 2
             shortcut = Conv2D(nb_channels_out, kernel_size=(1, 1), strides=_strides, padding='same')(shortcut)
-            #shortcut = BatchNormalization(momentum=0.99)(shortcut)
+            shortcut = BatchNormalization()(shortcut)
 
         cnn = layers.add([shortcut, cnn])
         cnn = Activation('relu')(cnn)
@@ -107,33 +107,37 @@ print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
 #0.006
-weight_decay = 0.03
+weight_decay = 0.006
 
 image_input = Input(shape=(75, 75, 2), name="image")
 angle_input = Input(shape=[1], name='angle')
 
 cnn = BatchNormalization(momentum=0.99)(image_input)
 
-
-cnn = Conv2D(32, kernel_size=(3,3), padding = 'same')(cnn)
+cnn = Conv2D(32, kernel_size=(2,2), padding = 'same')(cnn)
 cnn = add_common_layers(cnn)
 cnn = AveragePooling2D((2, 2))(cnn)
 
 cnn = residual_block(cnn, 32, 32)
 cnn = residual_block(cnn, 32, 32)
 cnn = residual_block(cnn, 32, 32)
-#cnn = Dropout(0.2)(cnn)
+
+cnn = AveragePooling2D((2, 2))(cnn)
+cnn = Dropout(0.2)(cnn)
 
 cnn = residual_block(cnn, 32, 32)
 cnn = residual_block(cnn, 32, 32)
 cnn = residual_block(cnn, 32, 32)
 
 cnn = AveragePooling2D((2, 2))(cnn)
+cnn = Dropout(0.2)(cnn)
 
 cnn = residual_block(cnn, 32, 32)
-
-#
 cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 32, 32)
+
+cnn = AveragePooling2D((2, 2))(cnn)
+cnn = Dropout(0.2)(cnn)
 
 cnn = residual_block(cnn, 32, 32)
 cnn = residual_block(cnn, 32, 32)
@@ -148,21 +152,24 @@ cnn = Concatenate()([cnn, BatchNormalization()(angle_input)])
 #kernel_regularizer=l2(weight_decay)
 
 cnn = Dense(100, activation='relu')(cnn)
+cnn = BatchNormalization()(cnn)
 cnn = Dropout(0.2)(cnn)
 
 cnn = Dense(50, activation='relu')(cnn)
+cnn = BatchNormalization()(cnn)
 cnn = Dropout(0.2)(cnn)
 
 output = Dense(2, activation='softmax')(cnn)
 
 
-optimizer = Adam(lr=0.001)
+optimizer = Adam(lr=0.01)
 model = Model(inputs=[image_input, angle_input], outputs=output)
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 model.summary()
 early_stopping = EarlyStopping(monitor = 'val_loss', patience = 8)
+
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 250, shuffle = True, callbacks=[early_stopping])
+          epochs = 70, shuffle = True, callbacks=[early_stopping])
 
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])

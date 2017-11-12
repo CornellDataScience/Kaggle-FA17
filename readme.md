@@ -3,6 +3,8 @@
 ## Competitions
 
 - [Zillow Housing challenge](./zillow) - COMPLETE
+
+Zillow is an online real estate company that revolutionized the real estate industry, by tracking large volumes of digital real estate information. They develop a set of Zestimates for properties across the United States, which they continually improve as they operate their main real estate operations (their online advertising platform). In this competition, Zillow has released an unprecedented amount of real estate data available to the general public. The objective for this competition is to develop a model that correctly estimates the log error of their own Zestimates - in other words, to predict how wrong Zestimates are.
 - [Safe Driver Challenge](./driver) - ONGOING
 - [Ship/Iceberg Classification Challenge](./iceberg) - ONGOING
 
