@@ -16,8 +16,8 @@ from keras.layers import average, Input, Concatenate
 
 #Import filter
 import sys
-sys.path.insert(0, '../Aaron/Filters')
-sys.path.insert(0, '../Kevin')
+sys.path.insert(0, '../Filters')
+sys.path.insert(0, '../../Kevin')
 
 from extra_functions import *
 import log_mean
@@ -32,8 +32,8 @@ def load_and_format(in_path):
     return out_df, out_images
 
 dir_path = path.abspath(path.join('__file__',"../.."))
-train_path = "../train.json"
-test_path =  "../test.json"
+train_path = "../../train.json"
+test_path =  "../../test.json"
 
 train_df, train_images = load_and_format(train_path)
 test_df, test_images = load_and_format(test_path)
@@ -46,11 +46,11 @@ x_angle_test = np.array(test_df.inc_angle)
 y_train = to_categorical(train_df["is_iceberg"])
 
 print('filtering images')
-#Kuan Filter on Train Images
+#Filter on Train Images
 train_images[:, :, :, 0] = log_mean.log_df(train_images[:, :, :, 0])
 train_images[:, :, :, 1] = log_mean.log_df(train_images[:, :, :, 1])
 
-#Kuan on Test Images
+#Test Images
 test_images[:, :, :, 0] = log_mean.log_df(test_images[:, :, :, 0])
 test_images[:, :, :, 1] = log_mean.log_df(test_images[:, :, :, 1])
 

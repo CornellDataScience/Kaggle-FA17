@@ -25,6 +25,7 @@ import numpy as np
 
 from utils import assert_window_size
 from utils import assert_indices_in_range
+from tqdm import tqdm
 
 
 def median_filter(img, win_size=3):
@@ -64,12 +65,9 @@ def median_filter(img, win_size=3):
             window = img[xleft:xright, yup:ydown]
             window_median = np.median(window)
 
-            img_filtered[i, j] = round(window_median)
+            img_filtered[i, j] = window_median
 
     return img_filtered
 
-def med_mult(img):
-    newimg = []
-    for i in range(np.size(img, axis = 2)):
-        newimg.append(median_filter(img[:, :, i]))
-    return np.array(newimg)              
+def median_df(data):
+    return np.array([median_filter(band) for band in tqdm(data)])             

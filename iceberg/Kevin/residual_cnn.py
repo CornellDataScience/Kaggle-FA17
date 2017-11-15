@@ -113,11 +113,11 @@ output = Dense(2, activation='softmax')(cnn)
 
 
 model = Model(inputs=[image_input, angle_input], outputs=output)
-model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
-early_stopping = EarlyStopping(monitor = 'val_loss', patience = 5)
+early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 5)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 28, shuffle = True, callbacks=[early_stopping])
+          epochs = 27, shuffle = True, callbacks=[early_stopping])
 
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
@@ -126,4 +126,4 @@ test_predictions = model.predict([test_images, x_angle_test])
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions_9.csv', index = False)
+pred_df.to_csv('predictions_3.csv', index = False)

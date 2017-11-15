@@ -1,4 +1,5 @@
 #Lee filter isn't good enough, obviously. Edges aren't good enough
+#Deprecated (fix file paths), but not needed since this isn't a good filter for our purposes
 import math
 import os.path as path
 import numpy as np

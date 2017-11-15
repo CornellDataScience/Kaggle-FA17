@@ -22,6 +22,7 @@
 
 
 import numpy as np
+from tqdm import tqdm
 
 from utils import assert_window_size
 from utils import assert_indices_in_range
@@ -68,7 +69,4 @@ def mean_filter(img, win_size=3):
     return img_filtered
 #Applies filter to all stuff in df
 def mean_filter_df(data):
-    datacopy = np.array(data, copy = True)
-    for i in (0, np.size(datacopy, 0)-1):
-        datacopy[i] = mean_filter(datacopy[i])
-    return datacopy
+    return np.array([mean_filter(band) for band in tqdm(data)])
