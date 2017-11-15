@@ -13,8 +13,18 @@ from keras.layers import Conv2D, BatchNormalization, Dropout, MaxPooling2D, Dens
 from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
-from extra_functions import *
 from keras import layers
+
+#Import lee filter
+import sys
+sys.path.insert(0, '../Filters')
+sys.path.insert(0, '../../Kevin')
+
+from extra_functions import *
+import mean
+
+#Import date time
+import datetime
 
 
 def load_and_format(in_path):
@@ -45,9 +55,9 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
     return cnn
 
 
-dir_path = path.abspath(path.join('__file__',"../.."))
-train_path = dir_path + "/train.json"
-test_path = dir_path + "/test.json"
+#dir_path = path.abspath(path.join('__file__',"../.."))
+train_path =  "../../train.json"
+test_path = "../../test.json"
 
 train_df, train_images = load_and_format(train_path)
 test_df, test_images = load_and_format(test_path)
@@ -56,6 +66,15 @@ train_df.inc_angle = train_df.inc_angle.astype(float).fillna(0.0)
 x_angle_train = np.array(train_df.inc_angle)
 x_angle_test = np.array(test_df.inc_angle)   
 y_train = to_categorical(train_df["is_iceberg"])
+
+#Mean Filter on Train Images
+train_images[:, :, :, 0] = mean.mean_filter_df(train_images[:, :, :, 0])
+train_images[:, :, :, 1] = mean.mean_filter_df(train_images[:, :, :, 1])
+
+#Mean on Test Images
+test_images[:, :, :, 0] = mean.mean_filter_df(test_images[:, :, :, 0])
+test_images[:, :, :, 1] = mean.mean_filter_df(test_images[:, :, :, 1])
+
 
 x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(train_images, x_angle_train, y_train, train_size=0.7)
 
@@ -126,4 +145,6 @@ test_predictions = model.predict([test_images, x_angle_test])
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions_3.csv', index = False)
+filename = "Prediction_" + str(datetime.datetime.now()) + ".csv"
+print(filename)
+pred_df.to_csv(filename, index = False)

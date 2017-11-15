@@ -107,15 +107,14 @@ print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
 #0.006
-weight_decay = 0.03
+weight_decay = 0.14
 
 image_input = Input(shape=(75, 75, 2), name="image")
 angle_input = Input(shape=[1], name='angle')
 
 cnn = BatchNormalization(momentum=0.99)(image_input)
 
-
-cnn = Conv2D(32, kernel_size=(3,3), padding = 'same')(cnn)
+cnn = Conv2D(32, kernel_size=(2,2), padding = 'same')(cnn)
 cnn = add_common_layers(cnn)
 cnn = AveragePooling2D((2, 2))(cnn)
 
@@ -124,7 +123,25 @@ cnn = residual_block(cnn, 32, 32)
 cnn = residual_block(cnn, 32, 32)
 
 cnn = AveragePooling2D((2, 2))(cnn)
-cnn = Dropout(0.2)(cnn)
+
+cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 32, 32)
+
+cnn = AveragePooling2D((2, 2))(cnn)
+
+cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 32, 32)
+
+cnn = AveragePooling2D((2, 2))(cnn)
+
+cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 32, 32)
+
+cnn = AveragePooling2D((2, 2))(cnn)
+cnn = Dropout(0.25)(cnn)
 
 cnn = Flatten()(cnn)
 cnn = Concatenate()([cnn, BatchNormalization()(angle_input)])
@@ -140,11 +157,12 @@ output = Dense(2, activation='softmax')(cnn)
 
 optimizer = Adam(lr=0.001)
 model = Model(inputs=[image_input, angle_input], outputs=output)
-model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
-early_stopping = EarlyStopping(monitor = 'val_loss', patience = 8)
+early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 8)
+
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 250, shuffle = True, callbacks=[early_stopping])
+          epochs = 35, shuffle = True, callbacks=[early_stopping])
 
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
@@ -153,4 +171,4 @@ test_predictions = model.predict([test_images, x_angle_test])
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions.csv', index = False)
+pred_df.to_csv('predictions_2.csv', index = False)

@@ -47,7 +47,7 @@ def grouped_convolution(cnn, nb_channels, _strides):
     groups = []
     for j in range(cardinality):
         group = Lambda(lambda z: z[:, :, :, j * _d:j * _d + _d])(cnn)
-        groups.append(Conv2D(_d, kernel_size=(3, 3), strides=_strides, padding='same')(group))
+        groups.append(Conv2D(_d, kernel_size=(3, 3), strides=_strides, padding='same', kernel_regularizer=l2(weight_decay))(group))
             
     # the grouped convolutional layer concatenates them as the outputs of the layer
     cnn = layers.concatenate(groups)
@@ -65,14 +65,14 @@ def residual_block(cnn, nb_channels_in, nb_channels_out, _strides=(1, 1), _proje
         shortcut = cnn
 
         # we modify the residual building block as a bottleneck design to make the network more economical
-        cnn = Conv2D(nb_channels_in, kernel_size=(1, 1), strides=(1, 1), padding='same')(cnn)
+        cnn = Conv2D(nb_channels_in, kernel_size=(1, 1), strides=(1, 1), padding='same', kernel_regularizer=l2(weight_decay))(cnn)
         cnn = add_common_layers(cnn)
 
         # ResNeXt (identical to ResNet when `cardinality` == 1)
         cnn = grouped_convolution(cnn, nb_channels_in, _strides=_strides)
         cnn = add_common_layers(cnn)
 
-        cnn = Conv2D(nb_channels_out, kernel_size=(1, 1), strides=(1, 1), padding='same')(cnn)
+        cnn = Conv2D(nb_channels_out, kernel_size=(1, 1), strides=(1, 1), padding='same', kernel_regularizer=l2(weight_decay))(cnn)
         # batch normalization is employed after aggregating the transformations and before adding to the shortcut
         #cnn = BatchNormalization(momentum=0.99)(cnn)
 
@@ -80,7 +80,7 @@ def residual_block(cnn, nb_channels_in, nb_channels_out, _strides=(1, 1), _proje
         if _project_shortcut or _strides != (1, 1):
             # when the dimensions increase projection shortcut is used to match dimensions (done by 1×1 convolutions)
             # when the shortcuts go across feature maps of two sizes, they are performed with a stride of 2
-            shortcut = Conv2D(nb_channels_out, kernel_size=(1, 1), strides=_strides, padding='same')(shortcut)
+            shortcut = Conv2D(nb_channels_out, kernel_size=(1, 1), strides=_strides, padding='same', kernel_regularizer=l2(weight_decay))(shortcut)
             #shortcut = BatchNormalization(momentum=0.99)(shortcut)
 
         cnn = layers.add([shortcut, cnn])
@@ -106,51 +106,47 @@ x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(tr
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
-#0.006
-weight_decay = 0.03
+weight_decay = 0.0006
 
 image_input = Input(shape=(75, 75, 2), name="image")
 angle_input = Input(shape=[1], name='angle')
 
 cnn = BatchNormalization(momentum=0.99)(image_input)
 
-
-cnn = Conv2D(32, kernel_size=(3,3), padding = 'same')(cnn)
+cnn = Conv2D(32, kernel_size=(2,2), padding = 'same', kernel_regularizer=l2(weight_decay))(cnn)
 cnn = add_common_layers(cnn)
 cnn = AveragePooling2D((2, 2))(cnn)
 
 cnn = residual_block(cnn, 32, 32)
 cnn = residual_block(cnn, 32, 32)
-cnn = residual_block(cnn, 32, 32)
-#cnn = Dropout(0.2)(cnn)
-
-cnn = residual_block(cnn, 32, 32)
-cnn = residual_block(cnn, 32, 32)
-cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 32, 64, True)
 
 cnn = AveragePooling2D((2, 2))(cnn)
 
-cnn = residual_block(cnn, 32, 32)
-
-#
-cnn = residual_block(cnn, 32, 32)
-
-cnn = residual_block(cnn, 32, 32)
-cnn = residual_block(cnn, 32, 32)
-cnn = residual_block(cnn, 32, 32)
+cnn = residual_block(cnn, 64, 64)
+cnn = residual_block(cnn, 64, 64)
+cnn = Dropout(0.1)(cnn)
+cnn = residual_block(cnn, 64, 128, True)
 
 cnn = AveragePooling2D((2, 2))(cnn)
+cnn = Dropout(0.1)(cnn)
+
+cnn = residual_block(cnn, 128, 128)
 cnn = Dropout(0.2)(cnn)
+cnn = residual_block(cnn, 128, 128)
+cnn = Dropout(0.2)(cnn)
+cnn = residual_block(cnn, 128, 128)
+
+cnn = AveragePooling2D((2, 2))(cnn)
+cnn = Dropout(0.25)(cnn)
 
 cnn = Flatten()(cnn)
 cnn = Concatenate()([cnn, BatchNormalization()(angle_input)])
 
-#kernel_regularizer=l2(weight_decay)
-
-cnn = Dense(100, activation='relu')(cnn)
+cnn = Dense(100, activation='relu', kernel_regularizer=l2(weight_decay))(cnn)
 cnn = Dropout(0.2)(cnn)
 
-cnn = Dense(50, activation='relu')(cnn)
+cnn = Dense(50, activation='relu', kernel_regularizer=l2(weight_decay))(cnn)
 cnn = Dropout(0.2)(cnn)
 
 output = Dense(2, activation='softmax')(cnn)
@@ -158,11 +154,12 @@ output = Dense(2, activation='softmax')(cnn)
 
 optimizer = Adam(lr=0.001)
 model = Model(inputs=[image_input, angle_input], outputs=output)
-model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
-early_stopping = EarlyStopping(monitor = 'val_loss', patience = 8)
+early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 7)
+
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 250, shuffle = True, callbacks=[early_stopping])
+          epochs = 150, shuffle = True, callbacks=[early_stopping])
 
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
@@ -171,4 +168,4 @@ test_predictions = model.predict([test_images, x_angle_test])
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions.csv', index = False)
+pred_df.to_csv('predictions_2.csv', index = False)
