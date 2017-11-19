@@ -80,7 +80,7 @@ From [this online paper](http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=739
 
 Original Image             | Filtered Image (median filter) | New Speckle
 :-------------------------:|:------------------------------:|:-------------------------:
-![](Images/Org_img.png)    |![](Images/Filter_img.png)      |![](Images/Respeckled_img.png)
+![](Images/Org_img.png)    |![](Images/Filtered_img.png)      |![](Images/Respeckled_img.png)
 
 #### Results
 
