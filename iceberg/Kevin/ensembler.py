@@ -3,6 +3,7 @@ import pandas as pd
 
 
 pred = pd.read_csv('resnet_preds.csv')
+
 """
 pred_1 = (pd.read_csv('predictions.csv'))["is_iceberg"]
 pred_2 = (pd.read_csv('predictions_2.csv'))["is_iceberg"]
@@ -16,7 +17,7 @@ pred_8 = (pd.read_csv('predictions_8.csv'))["is_iceberg"]   """
 simple_preds = pd.read_csv('Mean_Prediction_Ensemble.csv')["is_iceberg"]
 resnet_preds = pd.read_csv('resnet_preds.csv')["is_iceberg"]
 
-#ensembled_predictions = (pred_1 + pred_2 + pred_3 + pred_4 + pred_5 + pred_6 + pred_7 + pred_8) / 8.0
+#Take Average
 ensembled_predictions = (simple_preds + resnet_preds) / 2.0
 
 print(ensembled_predictions)
