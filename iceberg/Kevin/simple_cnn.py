@@ -2,7 +2,6 @@ import math
 import os.path as path
 import numpy as np
 import pandas as pd
-from skimage.util.montage import montage2d
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
@@ -13,15 +12,18 @@ from keras.layers import Conv2D, BatchNormalization, Dropout, MaxPooling2D, Dens
 from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
-from extra_functions import *
+from augmentation_methods import *
 
-
+""" Read in data. """
 def load_and_format(in_path):
     out_df = pd.read_json(in_path)
     out_images = out_df.apply(lambda c_row: [np.stack([c_row['band_1'],c_row['band_2']], -1).reshape((75,75,2))],1)
     out_images = np.stack(out_images).squeeze()
     return out_df, out_images
 
+####################################################### Set Up Data ##############################################################
+
+#Load in data
 dir_path = path.abspath(path.join('__file__',"../.."))
 train_path = dir_path + "/train.json"
 test_path = dir_path + "/test.json"
@@ -34,10 +36,13 @@ x_angle_train = np.array(train_df.inc_angle)
 x_angle_test = np.array(test_df.inc_angle)   
 y_train = to_categorical(train_df["is_iceberg"])
 
+#Split train data into train set and validation set
 x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(train_images, x_angle_train, y_train, train_size=0.7)
 
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
+
+################################################ Construct Network Architecture ##################################################
 
 weight_decay = 0.006
 
@@ -73,6 +78,8 @@ cnn = Dense(100, activation='relu', kernel_regularizer=l2(weight_decay))(cnn)
 
 output = Dense(2, activation='softmax')(cnn)
 
+################################################### Train Network ################################################################
+
 model = Model(inputs=[image_input, angle_input], outputs=output)
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
@@ -81,9 +88,10 @@ early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 7
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
           epochs = 80, shuffle = True, callbacks=[early_stopping])
 
+######################################################## Predict #################################################################
+
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
-
 
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
