@@ -17,12 +17,18 @@ from keras.utils.np_utils import to_categorical
 from subprocess import check_output
 print(check_output(["ls", "../input"]).decode("utf8"))
 
+# Upon Aaron's discovery, set the incidence angle to be a normal distribution
+# where almost all the incidence angle falls in the range of 19 to 46.
+print("data preprocessing...")
 df_train = pd.read_json("../input/train.json")
 df_test = pd.read_json("../input/test.json")
 df_train.inc_angle = df_train.inc_angle.replace('na', np.random.normal(loc=37.5, scale=3))
 df_train.inc_angle = df_train.inc_angle.astype(float).fillna(np.random.normal(loc=37.5, scale=3))
 
-# Train data
+# Train data. Observe that HV and HH for the same image are similar,
+# We guess that they are close to each other locally on the manifold
+# Thus we take the average of them as an extra third band.
+print("setting up train and test...")
 x_band1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in df_train["band_1"]])
 x_band2 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in df_train["band_2"]])
 
@@ -42,6 +48,12 @@ print("xtest:", x_test.shape)
 
 X_train, X_valid, Y_train, Y_valid, X_train_angle, X_valid_angle = model_selection.train_test_split(x_train, y_train, x_angle_train, test_size=0.3, random_state=1)
 
+# model built upon Kevin's simple_cnn by disecting each layer into two
+# previous experiment on deep neural network showed that for this specific
+# dataset, it's worth trading off breadth for depth
+# Other modifications include making activation to be elu, set the xavier
+# initialization to maintain the variance at each layer
+print("building neural network architecture...")
 inp_1 = Input(shape=(75, 75, 3))
 inp_2 = Input(shape=[1])
 weight_decay = 0.005
@@ -82,16 +94,21 @@ dense2 = Dense(64, activation='relu', kernel_initializer='glorot_normal',
 drop2 = Dropout(0.8)(dense2)
 out = Dense(2, activation='softmax')(drop2)
 
+# Train the model and make the prediction
+print("setting up the model...")
 model = Model(inputs=[inp_1,inp_2], outputs=out)
 optimizer = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 callbacks_list = [keras.callbacks.EarlyStopping(monitor='val_acc', patience=3, verbose=1)]
 model.summary()
 
+print("training...")
 model.fit([X_train, X_train_angle], Y_train, batch_size=64, epochs=70, validation_data=([X_valid, X_valid_angle], Y_valid), verbose=1)
 
+print("predicting...")
 preds = model.predict([x_test, x_angle_test], verbose=1)
 
+print("writing to csv...")
 submission = pd.DataFrame({'id': df_test["id"], 'is_iceberg': preds[:,1]})
 submission.head(200)
 

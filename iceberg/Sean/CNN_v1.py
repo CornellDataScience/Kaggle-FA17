@@ -1,3 +1,5 @@
+# The first attempt of the VGG-16 like neural network
+# Got log loss 0.26
 import numpy as np
 import pandas as pd
 import keras
@@ -9,6 +11,7 @@ from sklearn import model_selection
 from subprocess import check_output
 print(check_output(["ls", "../input"]).decode("utf8"))
 
+# simply filling missing incidence angle with 0
 print("data preprocessing...")
 df_train = pd.read_json("../input/train.json")
 df_test = pd.read_json("../input/test.json")
@@ -28,6 +31,7 @@ x_test = np.concatenate([x_band1[:, :, :, np.newaxis], x_band2[:, :, :, np.newax
 print("xtest:", x_test.shape)
 X_train, X_valid, Y_train, Y_valid = model_selection.train_test_split(x_train, y_train, test_size=0.3, random_state=1)
 
+# Build a VGG-16 like model with fewer layers
 print("building neural network architecture...")
 inp = Input(shape=(75, 75, 2))
 
