@@ -66,12 +66,6 @@ def get_model(img_shape=(75, 75, 2), num_classes=1, f=8, h=128):
     f*=2
     img_1 = Dropout(0.2)(img_1)
     img_1 = conv_block(img_1, nf=f, k=3, s=1, nb=3, p_act=p_activation)
-    img_1 = bn_pooling(img_1, k=3, s=3, m=0)
-    
-    #img_1:block_5
-    f*=2
-    img_1 = Dropout(0.2)(img_1)
-    img_1 = conv_block(img_1, nf=f, k=3, s=1, nb=3, p_act=p_activation)
     img_1 = Dropout(0.2)(img_1)
     img_1 = BatchNormalization(momentum=bn_model)(GlobalMaxPooling2D()(img_1))
     
