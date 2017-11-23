@@ -17,12 +17,12 @@ from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
 from extra_functions import *
 
-#Import lee filter
+#Import enhanced lee filter
 import sys
-sys.path.insert(0, '../Aaron/Filters')
+sys.path.insert(0, '../Filters')
 import lee_enhanced
 
-#Import date time
+#Import date time for csv creation
 import datetime
 
 def load_and_format(in_path):
@@ -32,8 +32,8 @@ def load_and_format(in_path):
     return out_df, out_images
 
 dir_path = path.abspath(path.join('__file__',"../.."))
-train_path = "../train.json"
-test_path =  "../test.json"
+train_path = "../../train.json"
+test_path =  "../../test.json"
 
 train_df, train_images = load_and_format(train_path)
 test_df, test_images = load_and_format(test_path)
@@ -52,7 +52,7 @@ print("Filtering images through enh lee")
 #train_images[:, :, :, 1] = lee_enhanced.lee_enhanced_filter_df(train_images[:, :, :, 1])
 #print("Done for train 2")
 
-#Lee Filter on Test Images
+#Enh. Lee Filter on Test Images
 test_images[:, :, :, 0] = lee_enhanced.lee_enhanced_filter_df(test_images[:, :, :, 0])
 print("Done for test 1")
 test_images[:, :, :, 1] = lee_enhanced.lee_enhanced_filter_df(test_images[:, :, :, 1])
@@ -63,10 +63,8 @@ x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(tr
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
-#0.006 ~ 0.20 LB, 0.9108
-#0.008 0.9 ish
-#0.004 0.9 but slightly better
-#0.005 also bad
+#0.006 is the best value
+#Model creation
 weight_decay = 0.006
 
 image_input = Input(shape=(75, 75, 2), name="image")
@@ -101,12 +99,14 @@ output = Dense(2, activation='softmax')(cnn)
 model = Model(inputs=[image_input, angle_input], outputs=output)
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 model.summary()
+
+#Model training
 print("Training")
 early_stopping = EarlyStopping(monitor = 'val_loss', patience = 10)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
           epochs = 35, shuffle = True, callbacks=[early_stopping])
 
-
+#Model Predicting
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
 

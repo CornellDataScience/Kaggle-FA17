@@ -17,12 +17,12 @@ from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
 from extra_functions import *
 
-#Import lee filter
+#Import kuan filter
 import sys
-sys.path.insert(0, '../Aaron/Filters')
+sys.path.insert(0, '../Filters')
 import kuan
 
-#Import date time
+#Import date time for csv creation
 import datetime
 
 def load_and_format(in_path):
@@ -32,8 +32,8 @@ def load_and_format(in_path):
     return out_df, out_images
 
 dir_path = path.abspath(path.join('__file__',"../.."))
-train_path = "../train.json"
-test_path =  "../test.json"
+train_path = "../../train.json"
+test_path =  "../../test.json"
 
 train_df, train_images = load_and_format(train_path)
 test_df, test_images = load_and_format(test_path)
@@ -59,7 +59,8 @@ x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(tr
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
-#0.006 
+#0.006
+#Model creation
 weight_decay = 0.006
 
 image_input = Input(shape=(75, 75, 2), name="image")
@@ -94,12 +95,14 @@ output = Dense(2, activation='softmax')(cnn)
 model = Model(inputs=[image_input, angle_input], outputs=output)
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 model.summary()
+
+#Training model
 print("Training")
 early_stopping = EarlyStopping(monitor = 'val_loss', patience = 10)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
           epochs = 35, shuffle = True, callbacks=[early_stopping])
 
-
+#Predicting on model
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
 

@@ -14,18 +14,19 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
 
-#Import filter
+#Import crop augmentation
 import sys
-sys.path.insert(0, '../../Aaron/DataAug')
+sys.path.insert(0, '../DataAug')
 sys.path.insert(0, '../../Kevin')
 
 from extra_functions import *
 import cropping
 
 
-#Import date time
+#Import date and time for csv creation
 import datetime
 
+#Kevin's CNN Architecture
 def load_and_format(in_path):
     out_df = pd.read_json(in_path)
     out_images = out_df.apply(lambda c_row: [np.stack([c_row['band_1'],c_row['band_2']], -1).reshape((75,75,2))],1)
@@ -46,9 +47,12 @@ x_angle_train = np.array(train_df.inc_angle)
 x_angle_test = np.array(test_df.inc_angle)   
 y_train = to_categorical(train_df["is_iceberg"])
 
+
+#Augment the data NUMBER times
 NUMBER = 5
 
 print('Filtering images')
+
 #Cropping Train images
 train_images, x_angle_train, y_train = cropping.crop_aug(train_images, x_angle_train, y_train, NUMBER)
 
@@ -60,7 +64,8 @@ x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(tr
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
-#0.006 
+#0.006 is the best value
+#Creation of model
 weight_decay = 0.006
 
 image_input = Input(shape=(60, 60, 2), name="image")
@@ -95,12 +100,14 @@ output = Dense(2, activation='softmax')(cnn)
 model = Model(inputs=[image_input, angle_input], outputs=output)
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 model.summary()
+
+#Training model
 print("Training")
 early_stopping = EarlyStopping(monitor = 'val_loss', patience = 10)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
           epochs = 50, shuffle = True, callbacks=[early_stopping])
 
-
+#Predictions
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
 

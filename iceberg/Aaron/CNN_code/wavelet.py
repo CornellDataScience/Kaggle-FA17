@@ -16,7 +16,7 @@ from keras.layers import average, Input, Concatenate
 
 #Import filter
 import sys
-sys.path.insert(0, '../Aaron/Filters')
+sys.path.insert(0, '../Filters')
 sys.path.insert(0, '../Kevin')
 
 from extra_functions import *
