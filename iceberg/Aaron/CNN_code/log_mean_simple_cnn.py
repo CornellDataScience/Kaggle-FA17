@@ -22,7 +22,7 @@ sys.path.insert(0, '../../Kevin')
 from extra_functions import *
 import log_mean
 
-#Import date time
+#Import date time for csv generation
 import datetime
 
 def load_and_format(in_path):
@@ -59,7 +59,7 @@ x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(tr
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
-#0.006 
+#0.006 is the best
 weight_decay = 0.006
 
 image_input = Input(shape=(75, 75, 2), name="image")
@@ -94,12 +94,14 @@ output = Dense(2, activation='softmax')(cnn)
 model = Model(inputs=[image_input, angle_input], outputs=output)
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 model.summary()
+
+#Training
 print("Training")
 early_stopping = EarlyStopping(monitor = 'val_loss', patience = 10)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
           epochs = 35, shuffle = True, callbacks=[early_stopping])
 
-
+#Predicting
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
 

@@ -7,6 +7,8 @@ import sys
 sys.path.insert(0, '../Filters')
 import median
 
+#Add speckle noise to an image
+#Multiply the value by a logarithmic representation 
 def speckle_noise(img):
     row,col = img.shape
     r = expon.rvs(size= (row*col))
@@ -15,6 +17,7 @@ def speckle_noise(img):
     return noisy
 
 #Precondition: images is of shape [:,:,:,2]
+#Augments the data {@code number} amount of time. Returns the images, angles, and values accordingly
 def speckle_aug(images, angles, values, number):
     newimages1 = []
     newimages2 = []

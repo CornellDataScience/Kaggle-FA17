@@ -63,8 +63,9 @@ def mean_filter(img, win_size=3):
 
             window = img[xleft:xright, yup:ydown]
             window_mean = window.mean()
-
-            img_filtered[i, j] = round(window_mean)
+    
+            img_filtered[i, j] = window_mean
+            #img_filtered[i, j] = round(window_mean)
 
     return img_filtered
 #Applies filter to all stuff in df

@@ -39,9 +39,7 @@ x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(tr
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
-#0.003 -- high of 0.9336
-#0.006 -- high of 0.9419 -- average out at ~0.92
-#0.013
+#0.006
 weight_decay = 0.006
 
 image_input = Input(shape=(75, 75, 2), name="image")
