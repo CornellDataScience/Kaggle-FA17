@@ -6,6 +6,9 @@
 
 Zillow is an online real estate company that revolutionized the real estate industry, by tracking large volumes of digital real estate information. They develop a set of Zestimates for properties across the United States, which they continually improve as they operate their main real estate operations (their online advertising platform). In this competition, Zillow has released an unprecedented amount of real estate data available to the general public. The objective for this competition is to develop a model that correctly estimates the log error of their own Zestimates - in other words, to predict how wrong Zestimates are.
 - [Safe Driver Challenge](./driver) - ONGOING
+
+The safe driver competition is designed by a Brazilian auto company, Porto Seguro, to predict whether a driver will file an auto insurance claim in the next year. Evaluation in this competition is done based on the Normalized Gini Coefficient which ranges from 0, a result of random guessing to 1, perfect predictions. Ideally, at the end of this competition, Porto Seguro will be able to make more accurate auto predictions and this hopefully increase insurance coverage to other drivers in Brazil
+
 - [Ship/Iceberg Classification Challenge](./iceberg) - ONGOING
 
 Members: Kevin Luo, Lily Liu, Sean Hu, Aaron Lou

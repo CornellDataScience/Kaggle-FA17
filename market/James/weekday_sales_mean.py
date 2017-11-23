@@ -1,3 +1,5 @@
+# This file was just to help me analyze how weekday affected the average unit sale
+
 import itertools
 import pandas as pd
 import numpy as np
@@ -18,14 +20,12 @@ del df4
 print("Done loading dataframes")
 def create_weekday(row):
     res = datetime.datetime(int(row['Year']), int(row['Month']), int(row['Day'])).weekday()
-    #print(res)
     return res
 
 df3['weekday'] = df3.apply(lambda row: create_weekday(row), axis=1)
 
 def cust_mean(grp):
     grp['mean'] = grp['unit_sales'].mean()
-    #print("calculated mean")
     return grp
 
 df3 = df3.groupby(['weekday']).apply(cust_mean)
