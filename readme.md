@@ -9,7 +9,7 @@ Zillow is an online real estate company that revolutionized the real estate indu
 
 Members: Mitchel Fung, Sena Katako, Max Jiang
 
-The safe driver competition is designed by a Brazilian auto company, Porto Seguro, to predict whether a driver will file an auto insurance claim in the next year. Evaluation in this competition is done based on the Normalized Gini Coefficient which ranges from 0, a result of random guessing to 1, perfect predictions. Ideally, at the end of this competition, Porto Seguro will be able to make more accurate auto predictions and this hopefully increase insurance coverage to other drivers in Brazil
+The safe driver competition is designed by a Brazilian auto company, Porto Seguro, and the goal is to predict whether a driver will file an auto insurance claim in the next year. Evaluation in this competition is done based on the Normalized Gini Coefficient which ranges from 0, a result of random guessing to 1, perfect predictions. Ideally, at the end of this competition, Porto Seguro will be able to make more accurate auto predictions and this will hopefully increase insurance coverage to other drivers in Brazil.
 
 - [Ship/Iceberg Classification Challenge](./iceberg) - ONGOING
 
