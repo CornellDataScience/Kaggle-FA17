@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from fbprophet import Prophet
+from matplotlib import pyplot as plt
 
 
 df = pd.read_csv('./date_and_sales.csv')
@@ -17,4 +18,12 @@ m.fit(df)
 
 
 future = m.make_future_dataframe(periods=14)
-future.tail(20)
+print("wtf")
+print(future.tail())
+
+forecast = m.predict(future)
+print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+
+m.plot(forecast);
+
+plt.show()
