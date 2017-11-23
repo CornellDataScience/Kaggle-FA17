@@ -1,6 +1,6 @@
-# Here's a list of the notebooks that I've submitted:
+# A list of the notebooks that I've submitted:
 
-## In the [Model Selection](./Model Selection) directory:
+## In the [Model Selection](./Model_Selection) directory:
 
 -Notebook01 RandomForestClassifier Model
 
