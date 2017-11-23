@@ -5,21 +5,26 @@
 ### Overview
 We are given historical data for brick-and-mortar sales for Corporacion Favorita, an Ecuadorian supermarket chain. We want to predict new sales quantities for new dates, given a tuple of (item, store, date). Submissions are evaluated based on a modified RMSE method, where perishables are given slightly more weight.
 
+### Exploratory Analysis
+
+[Processing and looking at the data](./Jo/jo_eda.ipynb)
+
 ### Current Models
+- [Weekday Mean Baseline](./weekday_sales_mean.py)
+- [Weekday Adjusted Mean Baseline](./weekday_adjusted_mean_baseline.py)
 
-
+### Planned Models
+- LSTM based model
+    - Per item?
+    - Per store?
+    - Singular model?
+- ARIMA model
+    - Per item (possible, kernel exists)
 
 ### Challenges
-
-
-### Timeline
-- 10/26 Research Proposal
-- 10/30 Presentation
+- Combinatoric nature of possible entries means that the training file is very large - need to find the most efficient way to group or process entries
+- Finding relationships between the seemingly "extra" data - oil prices, holidays etc, and figuring out if any are actually useful for analysis
 
 ### Reference
-- [Ship-Iceberg Discrimination with Convolutional Neural Networks in High Resolution SAR Images](http://elib.dlr.de/99079/2/2016_BENTES_Frost_Velotto_Tings_EUSAR_FP.pdf)
-
-- [Very Deep Convolutional Neural Network Based Image Classification Using Small Training Sample Size](http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=7486599)
-
-- [Multi-view Convolutional Neural Networks for 3D Shape Recognition](http://vis-www.cs.umass.edu/mvcnn/docs/su15mvcnn.pdf)
+- [Sales Prediction with Time Series Modeling](http://cs229.stanford.edu/proj2015/219_report.pdf)
 
