@@ -31,27 +31,18 @@ class MarketLSTM(nn.Module):
     def __init__(self, hidden_dim):
         super(MarketLSTM, self).__init__()
         self.hidden_dim = hidden_dim
-        self.lstm = nn.LSTMCell(1, hidden_dim)
+        self.lstm = nn.LSTM(1, hidden_dim)
         self.fc = nn.Linear(hidden_dim, 1)
+        self.hidden = self.init_hidden()
+
+    def init_hidden(self):
+        return (autograd.Variable(torch.zeros(1, 1, self.hidden_dim)),
+                autograd.Variable(torch.zeros(1, 1, self.hidden_dim)))
 
     def forward(self, input):
-        outputs = []
-        h_t = Variable(torch.zeros(input.size(0), 1, self.hidden_dim).cuda().double(), requires_grad=False)
-        c_t = Variable(torch.zeros(input.size(0), 1, self.hidden_dim).cuda().double(), requires_grad=False)
-
-        print(input.size())
-        for input_t in input[0]:
-            print("input")
-            print(input_t.size())
-            h_t, c_t = self.lstm(input_t, (h_t, c_t))
-            output = self.fc(h_t)
-            outputs += [output]
-        # for i in range(future):# if we should predict the future
-        #     h_t, c_t = self.lstm1(output, (h_t, c_t))
-        #     h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
-        #     output = self.linear(h_t2)
-        #     outputs += [output]
-        outputs = torch.stack(outputs, 1).squeeze(2)
+        lstm_out, self.hidden = self.lstm(
+            input.view(-1, 1, 1), self.hidden)
+        outputs = self.fc(lstm_out.view([-1]))
         return outputs
 
 
