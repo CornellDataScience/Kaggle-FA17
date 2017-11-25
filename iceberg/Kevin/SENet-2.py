@@ -15,6 +15,7 @@ from keras.layers import average, Input, Concatenate, GlobalAveragePooling2D, Re
 from augmentation_methods import *
 from keras import layers
 from keras import backend as K
+from keras.optimizers import Adam
 
 ################################################ Define Helper Functions ########################################################
 
@@ -32,9 +33,12 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
     shortcut = cnn
 
     # down-sampling is performed with a stride of 2
-    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=_strides, padding='same', use_bias=False)(cnn)
+    cnn = BatchNormalization()(cnn)
     cnn = Activation('relu')(cnn)
+    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=_strides, padding='same', use_bias=False)(cnn)
 
+    cnn = BatchNormalization()(cnn)
+    cnn = Activation('relu')(cnn)
     cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=(1, 1), padding='same', use_bias=False)(cnn)
 
     # Utilize if the input and output are of different dimensions
@@ -43,6 +47,7 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
         # when the shortcuts go across feature maps of two sizes, they are performed with a stride of 2
         shortcut = Conv2D(nb_channels, kernel_size=(1, 1), strides=_strides, padding='same', use_bias=False)(shortcut)
     
+
     ratio = 8
     channel_axis = 1 if K.image_data_format() == "channels_first" else -1
     se_shape = (1, 1, nb_channels)
@@ -59,7 +64,6 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
     
     #Add identity skip connection to our output
     cnn = layers.add([shortcut, cnn])
-    cnn = Activation('relu')(cnn)
     return cnn
 
 ##################################################### Set up data ###############################################################
@@ -73,7 +77,6 @@ test_path = dir_path + "/test.json"
 train_df, train_images = load_and_format(train_path)
 test_df, test_images = load_and_format(test_path)
 train_df.inc_angle = train_df.inc_angle.replace('na', 0)
-train_df.inc_angle = train_df.inc_angle.astype(float).fillna(0.0)
 x_angle_train = np.array(train_df.inc_angle)
 x_angle_test = np.array(test_df.inc_angle)   
 y_train = to_categorical(train_df["is_iceberg"])
@@ -89,45 +92,31 @@ print('Validation', x_val.shape, y_val.shape)
 image_input = Input(shape=(75, 75, 2), name="image")
 angle_input = Input(shape=[1], name='angle')
 
-cnn = BatchNormalization(momentum=0.99)(image_input)
+cnn = BatchNormalization()(image_input)
 
-cnn = Conv2D(32, kernel_size=(3,3), padding = 'same')(cnn)
+cnn = Conv2D(32, kernel_size=(3,3), padding = 'same', use_bias=False)(cnn)
 cnn = Activation('relu')(cnn)
 
 
-#cnn = residual_block(cnn, 32)
 cnn = residual_block(cnn, 32)
-cnn = Dropout(0.15)(cnn)
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.15)(cnn)
-
-#cnn = residual_block(cnn, 32)
-cnn = residual_block(cnn, 32)
-cnn = Dropout(0.15)(cnn)
-cnn = residual_block(cnn, 32)
-cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.15)(cnn)
-
-#cnn = residual_block(cnn, 32)
-cnn = residual_block(cnn, 32)
-cnn = Dropout(0.15)(cnn)
-cnn = residual_block(cnn, 32)
-cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.15)(cnn)
 
 cnn = residual_block(cnn, 32)
-cnn = Dropout(0.15)(cnn)
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.15)(cnn)
 
-#cnn = residual_block(cnn, 32)
 cnn = residual_block(cnn, 32)
-cnn = Dropout(0.15)(cnn)
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.15)(cnn)
+
+cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 32)
+cnn = AveragePooling2D((2,2))(cnn)
+
+cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 32)
+cnn = AveragePooling2D((2,2))(cnn)
 
 
 cnn = Flatten()(cnn)
@@ -135,19 +124,18 @@ cnn = Flatten()(cnn)
 cnn = Concatenate()([cnn, BatchNormalization()(angle_input)])
 
 #Fully-connected layer allows network to learn relationship between image features and incidence angle
-cnn = Dense(50, activation='relu')(cnn)
-cnn = Dropout(0.2)(cnn)
+cnn = Dense(50, activation='relu', use_bias=False)(cnn)
 
-output = Dense(2, activation='softmax')(cnn)
+output = Dense(2, activation='softmax', use_bias=False)(cnn)
 
 ####################################################### Train Network ###########################################################
 
 model = Model(inputs=[image_input, angle_input], outputs=output)
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
-early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 8)
+early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 7)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 50, shuffle = True, callbacks=[early_stopping])
+          epochs = 100, shuffle = True, callbacks=[early_stopping])
 
 ######################################################## Predict ################################################################
 
