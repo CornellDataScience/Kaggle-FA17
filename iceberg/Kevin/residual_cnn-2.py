@@ -7,14 +7,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
 from keras.utils.np_utils import to_categorical
 from keras.models import Sequential, Model
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers import Conv2D, BatchNormalization, Dropout, MaxPooling2D, Dense, Flatten, Activation, LeakyReLU, GlobalMaxPooling2D, AveragePooling2D
 from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
 from augmentation_methods import *
 from keras import layers
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 
 ################################################ Define Helper Functions ########################################################
 
@@ -32,9 +32,12 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
     shortcut = cnn
 
     # down-sampling is performed with a stride of 2
-    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=_strides, padding='same')(cnn)
+    cnn = BatchNormalization()(cnn)
     cnn = Activation('relu')(cnn)
-
+    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=_strides, padding='same')(cnn)
+    
+    cnn = BatchNormalization()(cnn)
+    cnn = Activation('relu')(cnn)
     cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=(1, 1), padding='same')(cnn)
 
     # Utilize if the input and output are of different dimensions
@@ -45,7 +48,6 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
     
     #Add identity skip connection to our output
     cnn = layers.add([shortcut, cnn])
-    cnn = Activation('relu')(cnn)
     return cnn
 
 ##################################################### Set up data ###############################################################
@@ -72,43 +74,38 @@ print('Validation', x_val.shape, y_val.shape)
 
 ################################################ Construct network architecture #################################################
 
-weight_decay = 0.01
+decay = 0.0005
 
 image_input = Input(shape=(75, 75, 2), name="image")
 angle_input = Input(shape=[1], name='angle')
 
-cnn = BatchNormalization(momentum=0.99)(image_input)
+cnn = BatchNormalization()(image_input)
 
 cnn = Conv2D(32, kernel_size=(3,3), padding = 'same')(cnn)
 cnn = Activation('relu')(cnn)
 
 cnn = residual_block(cnn, 32)
-cnn = Dropout(0.1)(cnn)
-
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.1)(cnn)
 
 cnn = residual_block(cnn, 32)
-cnn = Dropout(0.1)(cnn)
-
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.1)(cnn)
 
 cnn = residual_block(cnn, 32)
-cnn = Dropout(0.1)(cnn)
-
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.1)(cnn)
+cnn = Dropout(0.2)(cnn)
 
-cnn = residual_block(cnn, 32)
-cnn = Dropout(0.1)(cnn)
-
-cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 64, True)
+cnn = residual_block(cnn, 64)
 cnn = AveragePooling2D((2,2))(cnn)
-cnn = Dropout(0.1)(cnn)
+cnn = Dropout(0.25)(cnn)
+
+cnn = residual_block(cnn, 64)
+cnn = residual_block(cnn, 64)
+cnn = AveragePooling2D((2,2))(cnn)
+cnn = Dropout(0.25)(cnn)
 
 
 cnn = Flatten()(cnn)
@@ -116,29 +113,31 @@ cnn = Flatten()(cnn)
 cnn = Concatenate()([cnn, BatchNormalization()(angle_input)])
 
 #Fully-connected layer allows network to learn relationship between image features and incidence angle
-cnn = Dense(50, activation='relu')(cnn)
-cnn = Dropout(0.1)(cnn)
+cnn = Dense(100, activation='relu')(cnn)
+cnn = Dropout(0.25)(cnn)
 
 output = Dense(2, activation='softmax')(cnn)
 
 ####################################################### Train Network ###########################################################
-identifier = np.random.randint(0, 1500)
-model = Model(inputs=[image_input, angle_input], outputs=output)
-save = ModelCheckpoint(str(identifier) + 'model8.{epoch:03d}-{val_binary_crossentropy:.4f}.hdf5', monitor='val_binary_crossentropy', save_best_only=True, mode='min')
 
-model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
+model = Model(inputs=[image_input, angle_input], outputs=output)
+save = ModelCheckpoint('model8.{epoch:03d}-{val_binary_crossentropy:.4f}.hdf5', monitor='val_binary_crossentropy',
+                       save_best_only=True, mode='min')
+#decay = 0.001
+#lr=0.01
+optim = Adam(lr=0.003)
+model.compile(optimizer=optim, loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
-early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 5)
+early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 30)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 27, shuffle = True, callbacks=[early_stopping, save])
+          epochs = 150, shuffle = True, callbacks=[early_stopping, save])
 
 ######################################################## Predict ################################################################
 
-"""
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
 
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions.csv', index = False) """
+pred_df.to_csv('predictions.csv', index = False)

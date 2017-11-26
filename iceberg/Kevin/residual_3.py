@@ -32,10 +32,11 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
     shortcut = cnn
 
     # down-sampling is performed with a stride of 2
-    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=_strides, padding='same')(cnn)
     cnn = Activation('relu')(cnn)
-
-    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=(1, 1), padding='same')(cnn)
+    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=_strides, padding='same', kernel_regularizer=l2(decay))(cnn)
+    
+    cnn = Activation('relu')(cnn)
+    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=l2(decay))(cnn)
 
     # Utilize if the input and output are of different dimensions
     if _project_shortcut or _strides != (1, 1):
@@ -45,7 +46,6 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
     
     #Add identity skip connection to our output
     cnn = layers.add([shortcut, cnn])
-    cnn = Activation('relu')(cnn)
     return cnn
 
 ##################################################### Set up data ###############################################################
@@ -71,42 +71,47 @@ print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
 
 ################################################ Construct network architecture #################################################
-
-weight_decay = 0.01
+#0.001
+decay = 0.0007
 
 image_input = Input(shape=(75, 75, 2), name="image")
 angle_input = Input(shape=[1], name='angle')
 
 cnn = BatchNormalization(momentum=0.99)(image_input)
 
-cnn = Conv2D(32, kernel_size=(3,3), padding = 'same')(cnn)
+cnn = Conv2D(32, kernel_size=(3,3), padding = 'same', kernel_regularizer=l2(decay))(cnn)
 cnn = Activation('relu')(cnn)
+cnn = AveragePooling2D((2,2))(cnn)
 
 cnn = residual_block(cnn, 32)
 cnn = Dropout(0.1)(cnn)
-
+cnn = residual_block(cnn, 32)
+cnn = Dropout(0.1)(cnn)
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
 cnn = Dropout(0.1)(cnn)
 
 cnn = residual_block(cnn, 32)
 cnn = Dropout(0.1)(cnn)
-
+cnn = residual_block(cnn, 32)
+cnn = Dropout(0.1)(cnn)
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
 cnn = Dropout(0.1)(cnn)
 
-cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 64, True)
 cnn = Dropout(0.1)(cnn)
-
-cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 64)
+cnn = Dropout(0.1)(cnn)
+cnn = residual_block(cnn, 64)
 cnn = AveragePooling2D((2,2))(cnn)
 cnn = Dropout(0.1)(cnn)
 
-cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 128, True)
 cnn = Dropout(0.1)(cnn)
-
-cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 128)
+cnn = Dropout(0.1)(cnn)
+cnn = residual_block(cnn, 128)
 cnn = AveragePooling2D((2,2))(cnn)
 cnn = Dropout(0.1)(cnn)
 
@@ -116,8 +121,11 @@ cnn = Flatten()(cnn)
 cnn = Concatenate()([cnn, BatchNormalization()(angle_input)])
 
 #Fully-connected layer allows network to learn relationship between image features and incidence angle
-cnn = Dense(50, activation='relu')(cnn)
-cnn = Dropout(0.1)(cnn)
+cnn = Dense(150, activation='relu', kernel_regularizer=l2(decay))(cnn)
+cnn = Dropout(0.3)(cnn)
+
+cnn = Dense(75, activation='relu', kernel_regularizer=l2(decay))(cnn)
+#cnn = Dropout(0.1)(cnn)
 
 output = Dense(2, activation='softmax')(cnn)
 
@@ -128,9 +136,9 @@ save = ModelCheckpoint(str(identifier) + 'model8.{epoch:03d}-{val_binary_crossen
 
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
-early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 5)
+early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 10)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 27, shuffle = True, callbacks=[early_stopping, save])
+          epochs = 100, shuffle = True, callbacks=[early_stopping, save])
 
 ######################################################## Predict ################################################################
 

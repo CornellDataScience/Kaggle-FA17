@@ -10,6 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 train = pd.read_pickle("lstm_train_pickle.pkl")
 
 train.set_index(["item_nbr", "store_nbr"], inplace=True)
+train = train.sort_index()
 
 items = train.index.levels[0]
 stores = train.index.levels[1]
@@ -27,15 +28,15 @@ test_split = (ept - 1) - train_split
 
 class SalesTrain(Dataset):
     def __len__(self):
-        return int(len(items) * len(stores) * .8)
+        return int(len(stores) * .8) # int(len(items) * len(stores) * .8)
 
     # index is store * items_count
     #        + item
     def __getitem__(self, index):
-        s = int(index // items_count)
-        store = stores[s]
-        i = int(index % items_count)
-        item = items[i]
+        # s = int(index // items_count)
+        store = stores[index]
+        # i = int(index % items_count)
+        item = items[110]
 
         tuple_series = train.loc[item, store][["unit_sales"]]\
             .as_matrix()
@@ -47,19 +48,20 @@ class SalesTrain(Dataset):
 
 class SalesTest(Dataset):
     def __len__(self):
-        return int(len(items) * len(stores) * .2)
+        return int(len(stores) * .2)
 
     def __getitem__(self, index):
-        s = int(index // items_count)
-        store = stores[s]
-        i = int(index % items_count)
-        item = items[i]
+        # s = int(index // items_count)
+        store = stores[index]
+        # i = int(index % items_count)
+        item = items[110]
+
 
         tuple_series = train.loc[item, store][["unit_sales"]]\
             .as_matrix()
 
         subseries = tuple_series[train_split: -1]
-        target = tuple_series[train_split:]
+        target = tuple_series[train_split+1:]
         return subseries.reshape([-1]), target.reshape([-1])
 
 
@@ -109,6 +111,6 @@ def val_loader():
 
 if __name__ == "__main__":
     # idx = [x[1] for x in output_dataset]
-    a = SalesTrain()[6]
+    a = SalesTrain()[0]
 
     print(a)

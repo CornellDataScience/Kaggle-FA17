@@ -11,14 +11,23 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
-learning_rate = 0.005
-decay = 0.04
-epochs = 20
+learning_rate = 0.0015
+decay = 0.001
+epochs = 200
 
 parser = argparse.ArgumentParser(description='PyTorch DenseNet Training')
 
 parser.add_argument('--name', default='DenseNet_BC_100_12', type=str,
                     help='name of experiment')
+parser.add_argument('--lr', '--learning-rate', default=0.0015, type=float,
+                    help='initial learning rate')
+parser.add_argument('--momentum', default=0, type=float, help='momentum')
+parser.add_argument('--weight-decay', '--wd', default=0.001, type=float,
+                    help='weight decay (default: 1e-4)')
+parser.add_argument('--print-freq', '-p', default=10, type=int,
+                    help='print frequency (default: 10)')
+parser.add_argument('--layers', default=100, type=int,
+                    help='total number of layers (default: 100)')
 
 # used for logging to TensorBoard
 from tensorboard_logger import configure, log_value
@@ -36,13 +45,13 @@ class MarketLSTM(nn.Module):
         self.hidden = self.init_hidden()
 
     def init_hidden(self):
-        return (autograd.Variable(torch.zeros(1, 1, self.hidden_dim)),
-                autograd.Variable(torch.zeros(1, 1, self.hidden_dim)))
+        return (autograd.Variable(torch.zeros(1, 1, self.hidden_dim)).cuda().double(),
+                autograd.Variable(torch.zeros(1, 1, self.hidden_dim)).cuda().double())
 
     def forward(self, input):
         lstm_out, self.hidden = self.lstm(
             input.view(-1, 1, 1), self.hidden)
-        outputs = self.fc(lstm_out.view([-1]))
+        outputs = self.fc(lstm_out)
         return outputs
 
 
@@ -52,7 +61,7 @@ def main():
     
     configure("runs/%s" % (args.name))
 
-    model = MarketLSTM(50)
+    model = MarketLSTM(args.layers)
 
     # get the number of model parameters
 
@@ -67,9 +76,9 @@ def main():
 
     # define loss function (criterion) and pptimizer
     criterion = nn.MSELoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), learning_rate,
-                                momentum=0.9,
-                                weight_decay=decay)
+    optimizer = torch.optim.SGD(model.parameters(), args.lr,
+                                momentum=args.momentum,
+                                weight_decay=args.weight_decay)
 
     for epoch in range(epochs):
         train(train_loader(), model, criterion, optimizer, epoch)
@@ -77,8 +86,8 @@ def main():
 
 
         # remember best prec@1 and save checkpoint
-        is_best = loss > best_loss
-        best_loss = max(loss, best_loss)
+        is_best = loss < best_loss
+        best_loss = min(loss, best_loss)
         save_checkpoint({
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
@@ -97,6 +106,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
     end = time.time()
     for i, (input, target) in enumerate(train_loader):
+        model.zero_grad()
+        model.hidden = model.init_hidden()
+
         target = target.cuda(async=True)
         input = input.cuda()
         input_var = torch.autograd.Variable(input)
@@ -111,7 +123,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         losses.update(loss.data[0], input.size(0))
 
         # compute gradient and do SGD step
-        optimizer.zero_grad()
+        # optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -119,16 +131,14 @@ def train(train_loader, model, criterion, optimizer, epoch):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        if i % args.print_freq == 0:
+        if i % 10 == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
                       epoch, i, len(train_loader), batch_time=batch_time,
                       loss=losses))
     # log to TensorBoard
-    if args.tensorboard:
-        log_value('train_loss', losses.avg, epoch)
+    log_value('train_loss', losses.avg, epoch)
 
 
 def validate(val_loader, model, criterion, epoch):
@@ -157,16 +167,15 @@ def validate(val_loader, model, criterion, epoch):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        if i % args.print_freq == 0:
+        if i % 10 == 0:
             print('Test: [{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})'
                     .format(
-                        i, len(val_loader), batch_time=batch_time, loss=losses,))
+                        i, len(val_loader), batch_time=batch_time, loss=losses))
 
     # log to TensorBoard
-    if args.tensorboard:
-        log_value('val_loss', losses.avg, epoch)
+    log_value('val_loss', losses.avg, epoch)
     return losses.avg
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
