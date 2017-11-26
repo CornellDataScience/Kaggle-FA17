@@ -7,15 +7,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
 from keras.utils.np_utils import to_categorical
 from keras.models import Sequential, Model
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers import Conv2D, BatchNormalization, Dropout, MaxPooling2D, Dense, Flatten, Activation, LeakyReLU, GlobalMaxPooling2D, AveragePooling2D
 from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
-from keras.layers import average, Input, Concatenate, GlobalAveragePooling2D, Reshape, Dense, multiply, Permute
+from keras.layers import average, Input, Concatenate
 from augmentation_methods import *
 from keras import layers
-from keras import backend as K
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 
 ################################################ Define Helper Functions ########################################################
 
@@ -35,32 +34,17 @@ def residual_block(cnn, nb_channels, _strides=(1, 1), _project_shortcut=False):
     # down-sampling is performed with a stride of 2
     cnn = BatchNormalization()(cnn)
     cnn = Activation('relu')(cnn)
-    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=_strides, padding='same', use_bias=False)(cnn)
-
+    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=_strides, padding='same')(cnn)
+    
     cnn = BatchNormalization()(cnn)
     cnn = Activation('relu')(cnn)
-    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=(1, 1), padding='same', use_bias=False)(cnn)
+    cnn = Conv2D(nb_channels, kernel_size=(3, 3), strides=(1, 1), padding='same')(cnn)
 
     # Utilize if the input and output are of different dimensions
     if _project_shortcut or _strides != (1, 1):
         # when the dimensions increase projection shortcut is used to match dimensions (done by 1×1 convolutions)
         # when the shortcuts go across feature maps of two sizes, they are performed with a stride of 2
-        shortcut = Conv2D(nb_channels, kernel_size=(1, 1), strides=_strides, padding='same', use_bias=False)(shortcut)
-    
-
-    ratio = 8
-    channel_axis = 1 if K.image_data_format() == "channels_first" else -1
-    se_shape = (1, 1, nb_channels)
-
-    se = GlobalAveragePooling2D()(cnn)
-    se = Reshape(se_shape)(se)
-    se = Dense(nb_channels // ratio, activation='relu', use_bias=False)(se)
-    se = Dense(nb_channels, activation='sigmoid', use_bias=False)(se)
-
-    if K.image_data_format() == 'channels_first':
-        se = Permute((3, 1, 2))(se)
-
-    cnn = multiply([cnn, se])
+        shortcut = Conv2D(nb_channels, kernel_size=(1, 1), strides=_strides, padding='same')(shortcut)
     
     #Add identity skip connection to our output
     cnn = layers.add([shortcut, cnn])
@@ -77,6 +61,7 @@ test_path = dir_path + "/test.json"
 train_df, train_images = load_and_format(train_path)
 test_df, test_images = load_and_format(test_path)
 train_df.inc_angle = train_df.inc_angle.replace('na', 0)
+train_df.inc_angle = train_df.inc_angle.astype(float).fillna(0.0)
 x_angle_train = np.array(train_df.inc_angle)
 x_angle_test = np.array(test_df.inc_angle)   
 y_train = to_categorical(train_df["is_iceberg"])
@@ -89,15 +74,16 @@ print('Validation', x_val.shape, y_val.shape)
 
 ################################################ Construct network architecture #################################################
 
+decay = 0.0005
+
 image_input = Input(shape=(75, 75, 2), name="image")
 angle_input = Input(shape=[1], name='angle')
 
 cnn = BatchNormalization()(image_input)
 
-cnn = Conv2D(32, kernel_size=(3,3), padding = 'same', use_bias=False)(cnn)
+cnn = Conv2D(32, kernel_size=(3,3), padding = 'same')(cnn)
 cnn = Activation('relu')(cnn)
 
-
 cnn = residual_block(cnn, 32)
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
@@ -109,14 +95,17 @@ cnn = AveragePooling2D((2,2))(cnn)
 cnn = residual_block(cnn, 32)
 cnn = residual_block(cnn, 32)
 cnn = AveragePooling2D((2,2))(cnn)
+cnn = Dropout(0.2)(cnn)
 
-cnn = residual_block(cnn, 32)
-cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 64, True)
+cnn = residual_block(cnn, 64)
 cnn = AveragePooling2D((2,2))(cnn)
+cnn = Dropout(0.25)(cnn)
 
-cnn = residual_block(cnn, 32)
-cnn = residual_block(cnn, 32)
+cnn = residual_block(cnn, 64)
+cnn = residual_block(cnn, 64)
 cnn = AveragePooling2D((2,2))(cnn)
+cnn = Dropout(0.25)(cnn)
 
 
 cnn = Flatten()(cnn)
@@ -124,18 +113,24 @@ cnn = Flatten()(cnn)
 cnn = Concatenate()([cnn, BatchNormalization()(angle_input)])
 
 #Fully-connected layer allows network to learn relationship between image features and incidence angle
-cnn = Dense(50, activation='relu', use_bias=False)(cnn)
+cnn = Dense(100, activation='relu')(cnn)
+cnn = Dropout(0.25)(cnn)
 
-output = Dense(2, activation='softmax', use_bias=False)(cnn)
+output = Dense(2, activation='softmax')(cnn)
 
 ####################################################### Train Network ###########################################################
 
 model = Model(inputs=[image_input, angle_input], outputs=output)
-model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
+save = ModelCheckpoint('model8.{epoch:03d}-{val_binary_crossentropy:.4f}.hdf5', monitor='val_binary_crossentropy',
+                       save_best_only=True, mode='min')
+#decay = 0.001
+#lr=0.01
+optim = Adam(lr=0.003)
+model.compile(optimizer=optim, loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
-early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 7)
+early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 30)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 100, shuffle = True, callbacks=[early_stopping])
+          epochs = 150, shuffle = True, callbacks=[early_stopping, save])
 
 ######################################################## Predict ################################################################
 
@@ -145,4 +140,4 @@ test_predictions = model.predict([test_images, x_angle_test])
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions_3.csv', index = False)
+pred_df.to_csv('predictions.csv', index = False)

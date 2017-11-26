@@ -7,13 +7,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
 from keras.utils.np_utils import to_categorical
 from keras.models import Sequential, Model
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Conv2D, BatchNormalization, Dropout, MaxPooling2D, Dense, Flatten, Activation, LeakyReLU, GlobalMaxPooling2D, AveragePooling2D
 from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
 from augmentation_methods import *
 from keras import layers
+from keras.optimizers import Adam
 
 ################################################ Define Helper Functions ########################################################
 
@@ -121,20 +122,23 @@ cnn = Dropout(0.1)(cnn)
 output = Dense(2, activation='softmax')(cnn)
 
 ####################################################### Train Network ###########################################################
-
+identifier = np.random.randint(0, 1500)
 model = Model(inputs=[image_input, angle_input], outputs=output)
+save = ModelCheckpoint(str(identifier) + 'model8.{epoch:03d}-{val_binary_crossentropy:.4f}.hdf5', monitor='val_binary_crossentropy', save_best_only=True, mode='min')
+
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
 early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 5)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 27, shuffle = True, callbacks=[early_stopping])
+          epochs = 27, shuffle = True, callbacks=[early_stopping, save])
 
 ######################################################## Predict ################################################################
 
+"""
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
 
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions_3.csv', index = False)
+pred_df.to_csv('predictions.csv', index = False) """
