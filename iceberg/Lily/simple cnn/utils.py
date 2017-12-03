@@ -7,7 +7,7 @@ def rescale(imgs): return imgs / 100. +  0.5
 def read_jason(file='', loc='../input'):
 
     df = pd.read_json('{}/{}'.format(loc, file))
-    df['inc_angle'] = df['inc_angle'].replace('na', 0).astype(float)
+    df['inc_angle'] = df['inc_angle'].replace('na', -1).astype(float)
     #print(df['inc_angle'].value_counts())
     
     band1 = np.array([np.array(band).astype(np.float32).reshape(75, 75) for band in df["band_1"]])

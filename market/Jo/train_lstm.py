@@ -13,7 +13,7 @@ import torch.backends.cudnn as cudnn
 
 learning_rate = 0.0015
 decay = 0.001
-epochs = 200
+epochs = 10
 
 parser = argparse.ArgumentParser(description='PyTorch DenseNet Training')
 
@@ -26,6 +26,8 @@ parser.add_argument('--weight-decay', '--wd', default=0.001, type=float,
                     help='weight decay (default: 1e-4)')
 parser.add_argument('--print-freq', '-p', default=10, type=int,
                     help='print frequency (default: 10)')
+parser.add_argument('--adam', '-a',
+                    help='whether or not to use adam', action='store_true')
 parser.add_argument('--layers', default=100, type=int,
                     help='total number of layers (default: 100)')
 
@@ -76,7 +78,11 @@ def main():
 
     # define loss function (criterion) and pptimizer
     criterion = nn.MSELoss().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), args.lr,
+    if args.adam:
+        optimizer = torch.optim.Adam(model.parameters(), args.lr,
+                                weight_decay=args.weight_decay)
+    else:
+        optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
 

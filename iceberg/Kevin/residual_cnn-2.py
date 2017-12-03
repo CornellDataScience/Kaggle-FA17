@@ -119,10 +119,9 @@ cnn = Dropout(0.25)(cnn)
 output = Dense(2, activation='softmax')(cnn)
 
 ####################################################### Train Network ###########################################################
-
+identifier = np.random.randint(0, 1500)
 model = Model(inputs=[image_input, angle_input], outputs=output)
-save = ModelCheckpoint('model8.{epoch:03d}-{val_binary_crossentropy:.4f}.hdf5', monitor='val_binary_crossentropy',
-                       save_best_only=True, mode='min')
+save = ModelCheckpoint('{val_binary_crossentropy:.4f}_' + str(identifier) + '_model.hdf5', monitor='val_binary_crossentropy', save_best_only=True, mode='min')
 #decay = 0.001
 #lr=0.01
 optim = Adam(lr=0.003)
@@ -130,14 +129,14 @@ model.compile(optimizer=optim, loss = 'binary_crossentropy', metrics = ['accurac
 model.summary()
 early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 30)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 150, shuffle = True, callbacks=[early_stopping, save])
+          epochs = 120, shuffle = True, callbacks=[early_stopping, save])
 
 ######################################################## Predict ################################################################
-
+"""
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
 
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('predictions.csv', index = False)
+pred_df.to_csv('predictions.csv', index = False) """
