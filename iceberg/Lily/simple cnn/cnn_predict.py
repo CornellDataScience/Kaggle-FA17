@@ -53,8 +53,6 @@ if __name__ == '__main__':
         #prediction
         pred = model.predict([test_X_dup, test_meta], batch_size=batch_size, verbose=1)
         pred = np.squeeze(pred, axis=-1)
-            
-        file = 'subm_{}_f{:03d}.csv'.format(tmp, nb_filters)
-        print('\nSave to {}'.format(file))
+        
         subm = pd.DataFrame({'id': ids, target: pred})
-        subm.to_csv('../submit/{}'.format(file), index=False, float_format='%.6f')
+        subm.to_csv('cnn_pred.csv', index=False, float_format='%.6f')

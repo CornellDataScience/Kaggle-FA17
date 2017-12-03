@@ -28,40 +28,40 @@ test_split = (ept - 1) - train_split
 
 class SalesTrain(Dataset):
     def __len__(self):
-        return int(len(stores) * .8) # int(len(items) * len(stores) * .8)
+        return int(len(items) * len(stores))
 
     # index is store * items_count
     #        + item
     def __getitem__(self, index):
-        # s = int(index // items_count)
-        store = stores[index]
-        # i = int(index % items_count)
-        item = items[110]
+        s = int(index // items_count)
+        store = stores[s]
+        i = int(index % items_count)
+        item = items[i]
 
         tuple_series = train.loc[item, store][["unit_sales"]]\
             .as_matrix()
 
-        subseries = tuple_series[:train_split]
-        target = tuple_series[1:train_split + 1]
+        subseries = np.log1p(tuple_series[:train_split])
+        target = np.log1p(tuple_series[1:train_split + 1])
         return subseries.reshape([-1]), target.reshape([-1])
 
 
 class SalesTest(Dataset):
     def __len__(self):
-        return int(len(stores) * .2)
+        return int(len(items) * len(stores))
 
     def __getitem__(self, index):
-        # s = int(index // items_count)
-        store = stores[index]
-        # i = int(index % items_count)
-        item = items[110]
+        s = int(index // items_count)
+        store = stores[s]
+        i = int(index % items_count)
+        item = items[i]
 
 
         tuple_series = train.loc[item, store][["unit_sales"]]\
             .as_matrix()
 
-        subseries = tuple_series[train_split: -1]
-        target = tuple_series[train_split+1:]
+        subseries = np.log1p(tuple_series[train_split: -1])
+        target = np.log1p(tuple_series[train_split+1:])
         return subseries.reshape([-1]), target.reshape([-1])
 
 

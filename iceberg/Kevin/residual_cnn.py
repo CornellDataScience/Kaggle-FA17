@@ -128,9 +128,10 @@ save = ModelCheckpoint(str(identifier) + 'model8.{epoch:03d}-{val_binary_crossen
 
 model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy', 'binary_crossentropy'])
 model.summary()
-early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 5)
+early_stopping = EarlyStopping(monitor = 'val_binary_crossentropy', patience = 10)
+#epochcs=27, patience=5
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
-          epochs = 27, shuffle = True, callbacks=[early_stopping, save])
+          epochs = 50, shuffle = True, callbacks=[early_stopping, save])
 
 ######################################################## Predict ################################################################
 
