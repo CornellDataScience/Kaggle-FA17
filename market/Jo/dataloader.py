@@ -28,15 +28,15 @@ test_split = (ept - 1) - train_split
 
 class SalesTrain(Dataset):
     def __len__(self):
-        return int(len(items) * len(stores))
+        return int(len(items)*.5) # int(len(items) * len(stores) * .8)
 
     # index is store * items_count
     #        + item
     def __getitem__(self, index):
-        s = int(index // items_count)
-        store = stores[s]
-        i = int(index % items_count)
-        item = items[i]
+        # s = int(index // items_count)
+        store = stores[0]
+        # i = int(index % items_count)
+        item = items[index]
 
         tuple_series = train.loc[item, store][["unit_sales"]]\
             .as_matrix()
@@ -48,13 +48,13 @@ class SalesTrain(Dataset):
 
 class SalesTest(Dataset):
     def __len__(self):
-        return int(len(items) * len(stores))
+        return int(len(items)*.5)
 
     def __getitem__(self, index):
-        s = int(index // items_count)
-        store = stores[s]
-        i = int(index % items_count)
-        item = items[i]
+        # s = int(index // items_count)
+        store = stores[0]
+        # i = int(index % items_count)
+        item = items[index]
 
 
         tuple_series = train.loc[item, store][["unit_sales"]]\

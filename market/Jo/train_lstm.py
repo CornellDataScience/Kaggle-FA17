@@ -10,10 +10,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+from yellowfin import YFOptimizer
 
 learning_rate = 0.0015
 decay = 0.001
-epochs = 10
+epochs = 80
 
 parser = argparse.ArgumentParser(description='PyTorch DenseNet Training')
 
@@ -28,6 +29,8 @@ parser.add_argument('--print-freq', '-p', default=10, type=int,
                     help='print frequency (default: 10)')
 parser.add_argument('--adam', '-a',
                     help='whether or not to use adam', action='store_true')
+parser.add_argument('--yf',
+                    help='whether or not to use yellowfin', action='store_true')
 parser.add_argument('--layers', default=100, type=int,
                     help='total number of layers (default: 100)')
 
@@ -81,6 +84,8 @@ def main():
     if args.adam:
         optimizer = torch.optim.Adam(model.parameters(), args.lr,
                                 weight_decay=args.weight_decay)
+    elif args.yf:
+        optimizer = YFOptimizer(model.parameters(), lr=args.lr)
     else:
         optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
