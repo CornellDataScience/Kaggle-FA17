@@ -1,1 +1,1 @@
-python train_lstm.py --lr .00002 --momentum .9 --wd 0 --name f-a.00002-.9-0
+python train_lstm.py --lr .00002 --yf --wd 0 --name a.00002-yf-0
