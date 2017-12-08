@@ -17,7 +17,7 @@ m = Prophet()
 m.fit(df)
 
 
-future = m.make_future_dataframe(periods=14)
+future = m.make_future_dataframe(periods=17)
 print("wtf")
 print(future.tail())
 
@@ -25,5 +25,5 @@ forecast = m.predict(future)
 print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
 
 m.plot(forecast);
-
+forecast[['ds', 'yhat']].to_csv('prophet_predictions.csv')
 plt.show()
