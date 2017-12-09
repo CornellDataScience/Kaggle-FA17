@@ -20,7 +20,7 @@ x_angle_test = np.array(test_df.inc_angle)
 
 #load in saved model
 print('loading saved model')
-model = load_model('0.1838_1359_model.hdf5')
+model = load_model('0.1433_1470_model.hdf5')
 
 print("predicting")
 test_predictions = model.predict([test_images, x_angle_test])
@@ -28,4 +28,4 @@ test_predictions = model.predict([test_images, x_angle_test])
 pred_df = test_df[['id']].copy()
 pred_df['is_iceberg'] = test_predictions[:,1]
 print("creating csv")
-pred_df.to_csv('test_pred.csv', index = False)
+pred_df.to_csv('deep.csv', index = False)

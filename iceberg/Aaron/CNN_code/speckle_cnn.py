@@ -19,7 +19,6 @@ import sys
 sys.path.insert(0, '../DataAug')
 sys.path.insert(0, '../../Kevin')
 
-from extra_functions import *
 import speckle
 
 
@@ -48,11 +47,11 @@ y_train = to_categorical(train_df["is_iceberg"])
 
 NUMBER = 5
 
+x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(train_images, x_angle_train, y_train, train_size=0.7)
+
 print('Filtering images')
 #Augmenting
-train_images, x_angle_train, y_train = speckle.speckle_aug(train_images, x_angle_train, y_train, NUMBER)
-
-x_train, x_val, x_angle_train, x_angle_val, y_train, y_val = train_test_split(train_images, x_angle_train, y_train, train_size=0.7)
+x_train, x_angle_train, y_train = speckle.speckle_aug(x_train, x_angle_train, y_train, NUMBER)
 
 print('Train', x_train.shape, y_train.shape)
 print('Validation', x_val.shape, y_val.shape) 
@@ -90,10 +89,10 @@ output = Dense(2, activation='softmax')(cnn)
 
 
 model = Model(inputs=[image_input, angle_input], outputs=output)
-model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+model.compile(optimizer='adam', loss = 'binary_crossentropy', metrics = ['binary_crossentropy', 'accuracy'])
 model.summary()
 print("Training")
-early_stopping = EarlyStopping(monitor = 'val_loss', patience = 10)
+early_stopping = EarlyStopping(monitor = 'binary_crossentropy', patience = 10)
 model.fit([x_train, x_angle_train], y_train, batch_size = 64, validation_data = ([x_val, x_angle_val], y_val), 
           epochs = 50, shuffle = True, callbacks=[early_stopping])
 
