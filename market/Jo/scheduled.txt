@@ -1,1 +1,0 @@
-python train_lstm.py --lr .00002 --yf --wd 0 --name a.00002-yf-0

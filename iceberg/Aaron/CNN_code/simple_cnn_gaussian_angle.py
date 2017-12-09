@@ -13,7 +13,6 @@ from keras.layers import Conv2D, BatchNormalization, Dropout, MaxPooling2D, Dens
 from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
 from keras.layers import average, Input, Concatenate
-from extra_functions import *
 
 #Kevin's CNN architecture
 def load_and_format(in_path):
@@ -23,8 +22,8 @@ def load_and_format(in_path):
     return out_df, out_images
 
 dir_path = path.abspath(path.join('__file__',"../.."))
-train_path = dir_path + "/train.json"
-test_path = dir_path + "/test.json"
+train_path = "../../train.json"
+test_path =  "../../test.json"
 
 train_df, train_images = load_and_format(train_path)
 test_df, test_images = load_and_format(test_path)

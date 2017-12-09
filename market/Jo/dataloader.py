@@ -28,14 +28,14 @@ test_split = (ept - 1) - train_split
 
 class SalesTrain(Dataset):
     def __len__(self):
-        return int(len(items)*.5) # int(len(items) * len(stores) * .8)
+        return int(len(items) * len(stores))
 
     # index is store * items_count
     #        + item
     def __getitem__(self, index):
-        # s = int(index // items_count)
-        store = stores[0]
-        # i = int(index % items_count)
+        s = int(index // items_count)
+        store = stores[s]
+        i = int(index % items_count)
         item = items[index]
 
         tuple_series = train.loc[item, store][["unit_sales"]]\
@@ -48,12 +48,12 @@ class SalesTrain(Dataset):
 
 class SalesTest(Dataset):
     def __len__(self):
-        return int(len(items)*.5)
+        return int(len(items) * len(stores))
 
     def __getitem__(self, index):
-        # s = int(index // items_count)
-        store = stores[0]
-        # i = int(index % items_count)
+        s = int(index // items_count)
+        store = stores[s]
+        i = int(index % items_count)
         item = items[index]
 
 
@@ -63,6 +63,24 @@ class SalesTest(Dataset):
         subseries = np.log1p(tuple_series[train_split: -1])
         target = np.log1p(tuple_series[train_split+1:])
         return subseries.reshape([-1]), target.reshape([-1])
+
+class SalesAll(Dataset):
+    def __len__(self):
+        return int(len(items) * len(stores))
+
+    # index is store * items_count
+    #        + item
+    def __getitem__(self, index):
+        s = int(index // items_count)
+        store = stores[s]
+        i = int(index % items_count)
+        item = items[i]
+
+        tuple_series = train.loc[item, store][["unit_sales"]]\
+            .as_matrix()
+
+        subseries = np.log1p(tuple_series)
+        return subseries.reshape([-1])
 
 
 def train_loader():
@@ -74,6 +92,11 @@ def train_loader():
 def val_loader():
     return torch.utils.data.DataLoader(
         SalesTest(),
+        batch_size=1, shuffle=True, num_workers=4)
+
+def all_loader():
+    return torch.utils.data.DataLoader(
+        SalesAll(),
         batch_size=1, shuffle=True, num_workers=4)
 
 
